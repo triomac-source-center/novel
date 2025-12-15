@@ -8,10 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Header } from "@/components/mainheader"
 import { Sidebar } from "@/components/mainsidebar"
 import { useUser } from "@clerk/nextjs"
+import { fetchUserData } from "@/lib/fetchuser"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
   const { user } = useAuth()
   const [showBalance, setShowBalance] = useState(true)
+  const userData = await fetchUserData()
+
+  if (!userData) return <p>Loading...</p>;
 
   if (!user) {
     return null
@@ -81,28 +85,6 @@ export default function DashboardPage() {
     { name: "Dow Jones", value: "39,512.84", change: "+0.45%" },
     { name: "VIX", value: "13.42", change: "-2.34%" },
   ]
-
-  const { user: clerkUser, isSignedIn } = useUser(); 
-  const [userData, setUserData] = useState(null);    
-
-  useEffect(() => {
-    if (!clerkUser) return; 
-
-    async function fetchUser() {
-      try {
-        const res = await fetch(`https://novel-server-cdcp.onrender.com//api/${clerkUser.id}`);
-        const data = await res.json();
-        setUserData(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    fetchUser();
-  }, [clerkUser]);
-
-  if (!isSignedIn) return <p>Please log in</p>;
-  if (!userData) return <p>Loading...</p>;
 
 
   return (
