@@ -1,6 +1,6 @@
 import { Schema, model, models } from "mongoose";
 
-const transactionSchema = new mongoose.Schema(
+const transactionSchema = new Schema(
   {
     type: { 
       type: String, 
@@ -29,7 +29,7 @@ const transactionSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const walletSchema = new mongoose.Schema(
+const walletSchema = new Schema(
   {
     balance: { 
       type: Number, 
