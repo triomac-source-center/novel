@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [userData, setUserData] = useState(null);
   const { user } = useAuth()
   const [showBalance, setShowBalance] = useState(true)
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!clerkUser) return;
