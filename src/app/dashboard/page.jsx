@@ -9,8 +9,8 @@ import { Header } from "@/components/mainheader"
 import { Sidebar } from "@/components/mainsidebar"
 import { useUser } from "@clerk/nextjs"
 
-export default async function DashboardPage() {
-  
+export default function DashboardPage() {
+
   const { user: clerkUser, isSignedIn } = useUser();
   const [userData, setUserData] = useState(null);
   const { user } = useAuth()
