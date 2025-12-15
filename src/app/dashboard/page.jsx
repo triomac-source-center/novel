@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import {  useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp, Activity, Wallet, Eye, EyeOff } from "lucide-react"
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Header } from "@/components/mainheader"
 import { Sidebar } from "@/components/mainsidebar"
+import { useUser } from "@clerk/nextjs"
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -81,6 +82,28 @@ export default function DashboardPage() {
     { name: "VIX", value: "13.42", change: "-2.34%" },
   ]
 
+  const { user: clerkUser } = useUser();
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    if (!clerkUser) return;
+    async function fetchUser() {
+      try {
+        const res = await fetch(`https://novel-server-cdcp.onrender.com/api/${clerkUser.id}`);
+        const data = await res.json();
+        setUserData(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchUser();
+  }, [clerkUser]);
+
+  if (!userData) return <p>Loading...</p>;
+
+
+
   return (
     <div className="min-h-screen">
       <Header/>
@@ -89,7 +112,7 @@ export default function DashboardPage() {
     <div className="p-6 lg:p-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-white">{userData.firstName}</h1>
           <p className="text-muted-foreground">Welcome back, {user.name}</p>
         </div>
         <Button variant="outline" size="icon" onClick={() => setShowBalance(!showBalance)}>
