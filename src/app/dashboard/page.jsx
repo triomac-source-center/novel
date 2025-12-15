@@ -16,6 +16,24 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [showBalance, setShowBalance] = useState(true)
 
+  useEffect(() => {
+    if (!clerkUser) return;
+
+    async function fetchUser() {
+      try {
+        const res = await fetch(`https://novel-server-cdcp.onrender.com/api/${clerkUser.id}`);
+        const data = await res.json();
+        setUserData(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUser();
+  }, [clerkUser]);
+
   if (!user) {
     return null
   }
@@ -85,23 +103,7 @@ export default function DashboardPage() {
     { name: "VIX", value: "13.42", change: "-2.34%" },
   ]
 
-  useEffect(() => {
-    if (!clerkUser) return;
-
-    async function fetchUser() {
-      try {
-        const res = await fetch(`https://novel-server-cdcp.onrender.com/api/${clerkUser.id}`);
-        const data = await res.json();
-        setUserData(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchUser();
-  }, [clerkUser]);
+  
 
   if (!isSignedIn) return <p>Please log in</p>;
   if (loading) return <p>Loading...</p>;
