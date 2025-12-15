@@ -1,5 +1,5 @@
 "use client"
-import {  useState } from "react"
+import {  useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp, Activity, Wallet, Eye, EyeOff } from "lucide-react"
