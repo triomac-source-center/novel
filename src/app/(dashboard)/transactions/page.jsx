@@ -32,7 +32,7 @@ export default function HistoryPage() {
     fetchUser();
   }, [clerkUser]);
 
-  if (!user) {
+  if (!clerkUser) {
     return null
   }
 
