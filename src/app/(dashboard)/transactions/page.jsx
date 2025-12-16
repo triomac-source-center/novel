@@ -50,10 +50,6 @@ export default function HistoryPage() {
       </div>
 
       <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle>All Transactions</CardTitle>
-          <CardDescription>Complete history of your trading activity</CardDescription>
-        </CardHeader>
         <CardContent>
           {userData.wallet.transactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
