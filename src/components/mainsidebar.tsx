@@ -11,7 +11,7 @@ import { useState } from "react"
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Market", href: "/market", icon: TrendingUp },
-  { name: "Trade History", href: "/history", icon: History },
+  { name: "History", href: "/transactions", icon: History },
   { name: "Profile", href: "/profile", icon: User },
   { name: "Wallet", href: "/wallet", icon: Wallet },
 ]
