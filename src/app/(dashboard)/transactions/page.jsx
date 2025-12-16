@@ -44,12 +44,11 @@ export default function HistoryPage() {
 
   return (
     <div className="p-6 lg:p-8 bgmain">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Transaction History</h1>
-        <p className="text-muted-foreground">View all your past transactions</p>
-      </div>
-
       <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle>All Transactions</CardTitle>
+          <CardDescription>Complete history of your trading activity</CardDescription>
+        </CardHeader>
         <CardContent>
           {userData.wallet.transactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">

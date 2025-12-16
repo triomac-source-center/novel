@@ -43,7 +43,7 @@ export default function MainLayoutDashboard({children}) {
 
   return (
     <div className="min-h-screen bgmain">
-      <Header/>
+      <Header userdata={[userData.username, userData.email]}/>
       <Sidebar wallet={userData.wallet}/>
       <main className="lg:pl-64 pt-16">
         {children}
