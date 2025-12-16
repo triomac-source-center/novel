@@ -92,7 +92,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">${trade.total.toFixed(2)}</p>
+                    <p className="font-semibold">${trade.amount}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(trade.createdAt).toLocaleString("en-US", {dateStyle: "medium",timeStyle: "short",})} {new Date(trade.createdAt).toLocaleTimeString()}
                     </p>
