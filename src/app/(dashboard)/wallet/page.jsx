@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react"
-import { useUserData } from "@/context/usercontext"
 
 export default function WalletPage() {
   const { user, updateUser } = useAuth()

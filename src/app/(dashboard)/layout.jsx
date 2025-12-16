@@ -5,7 +5,6 @@ import { ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp, Activity, Wallet,
 import { Header } from "@/components/mainheader"
 import { Sidebar } from "@/components/mainsidebar"
 import { useUser } from "@clerk/nextjs"
-import { UserProvider } from "@/context/usercontext"
 
 export default function MainLayoutDashboard({children}) {
 
@@ -37,13 +36,12 @@ export default function MainLayoutDashboard({children}) {
     return null
   }
 
-//   if (!isSignedIn) return <p>Please log in</p>;
-//   if (loading) return <p>Loading...</p>;
-//   if (!userData) return <p>User not found</p>;
+  if (!isSignedIn) return <p>Please log in</p>;
+  if (loading) return <p>Loading...</p>;
+  if (!userData) return <p>User not found</p>;
 
 
   return (
-    <UserProvider user={userData}>
     <div className="min-h-screen bgmain">
       <Header/>
       <Sidebar wallet={userData.wallet}/>
@@ -51,6 +49,5 @@ export default function MainLayoutDashboard({children}) {
         {children}
     </main>
     </div>
-    </UserProvider>
   )
 }

@@ -9,13 +9,40 @@ import { Header } from "@/components/mainheader"
 import { Sidebar } from "@/components/mainsidebar"
 import { useUser } from "@clerk/nextjs"
 import MainLayoutDashboard from "../layout"
-import { useUserData } from "@/context/usercontext"
 
 export default function DashboardPage() {
 
+  const { user: clerkUser, isSignedIn } = useUser();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth()
   const [showBalance, setShowBalance] = useState(true)
-  const userData = useUserData()
+
+  useEffect(() => {
+    if (!clerkUser) return;
+
+    async function fetchUser() {
+      try {
+        const res = await fetch(`https://novel-server-cdcp.onrender.com/api/${clerkUser.id}`);
+        const data = await res.json();
+        setUserData(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUser();
+  }, [clerkUser]);
+
+  if (!user) {
+    return null
+  }
+
+  if (!isSignedIn) return <p>Please log in</p>;
+  if (loading) return <p>Loading...</p>;
+  if (!userData) return <p>User not found</p>;
 
   if (!user) {
     return null
