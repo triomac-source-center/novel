@@ -58,10 +58,6 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="min-h-screen bgmain">
-          {/* <Header/>*/}
-          <Sidebar wallet="0"/> 
-   <main className="lg:pl-64 pt-16">
     <div className="p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-white">Wallet</h1>
@@ -210,8 +206,6 @@ export default function WalletPage() {
           </Card>
         </div>
       </div>
-    </div>
-    </main>
     </div>
   )
 }
