@@ -7,8 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react"
+import { useUser } from "@clerk/nextjs"
 
 export default function WalletPage() {
+  const { user: clerkUser, isSignedIn } = useUser();
+  const [userData, setUserData] = useState(null);
   const { user, updateUser } = useAuth()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
@@ -27,17 +30,49 @@ export default function WalletPage() {
     return null
   }
 
-  const handleDeposit = () => {
-    const amount = Number.parseFloat(depositAmount)
-    if (!amount || amount <= 0) {
-      alert("Please enter a valid amount")
-      return
+  const handleDeposit = async () => {
+  if (!amount || Number(amount) <= 0) {
+    setError("Invalid amount");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError(null);
+
+    const res = await fetch(
+      "https://novel-server-cdcp.onrender.com/api/deposit",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clerkId: clerkUser.id,          // 🔑 clé principale
+          amount: Number(amount),    // ⚠️ convertir en Number
+          description: "Wallet deposit",
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Deposit failed");
     }
 
-    updateUser({ balance: user.balance + amount })
-    setDepositAmount("")
-    alert(`Successfully deposited $${amount.toFixed(2)}`)
+    console.log("Deposit success:", data);
+    alert(`Successfully deposited $${data}`)
+    setAmount(""); // reset input
+
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
   }
+};
+
+
 
   const handleWithdraw = () => {
     const amount = Number.parseFloat(withdrawAmount)
