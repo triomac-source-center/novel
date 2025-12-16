@@ -115,7 +115,6 @@ export default function DashboardPage() {
 
 
   return (
-    <MainLayoutDashboard>
     <div className="p-6 lg:p-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
@@ -328,6 +327,5 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
-    </MainLayoutDashboard>
   )
 }
