@@ -43,9 +43,9 @@ export default function HistoryPage() {
   if (!userData) return <p>User not found</p>;
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 bgmain">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Transaction History</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-white">Transaction History</h1>
         <p className="text-muted-foreground">View all your past transactions</p>
       </div>
 
@@ -62,7 +62,7 @@ export default function HistoryPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {userData.wallet.transactions.map((trade) => (
+              {userData.wallet.transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((trade) => (
                 <div
                   key={`${trade.createdAt}-${trade.type}`}
                   className="flex items-center justify-between rounded-lg border border-border/50 p-4 transition-colors hover:bg-accent"
