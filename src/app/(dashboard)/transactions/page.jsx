@@ -13,10 +13,6 @@ export default function HistoryPage() {
 
   const { user: clerkUser, isSignedIn } = useUser();
   const [userData, setUserData] = useState(null);
-  const { user } = useAuth()
-  const router = useRouter()
-  const [mounted, setMounted] = useState(false)
-  const [trades, setTrades] = useState([])
 
   useEffect(() => {
     if (!clerkUser) return;
@@ -43,20 +39,6 @@ export default function HistoryPage() {
   if (!isSignedIn) return <p>Please log in</p>;
   if (loading) return <p>Loading...</p>;
   if (!userData) return <p>User not found</p>;
-
-  useEffect(() => {
-    setMounted(true)
-    if (!user) {
-      router.push("/login")
-    } else {
-      const savedTrades = JSON.parse(localStorage.getItem("trades") || "[]")
-      setTrades(savedTrades)
-    }
-  }, [user, router])
-
-  if (!mounted || !user) {
-    return null
-  }
 
   return (
     <div className="p-6 lg:p-8">
