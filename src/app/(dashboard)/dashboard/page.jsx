@@ -115,7 +115,7 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-6 lg:p-8 bgmain">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">{userData.firstName}</h1>
