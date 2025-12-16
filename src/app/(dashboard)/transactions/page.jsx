@@ -13,6 +13,8 @@ export default function HistoryPage() {
 
   const { user: clerkUser, isSignedIn } = useUser();
   const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!clerkUser) return;
