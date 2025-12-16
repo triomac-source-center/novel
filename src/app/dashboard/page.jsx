@@ -114,13 +114,13 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen">
       <Header/>
-      <Sidebar/>
+      <Sidebar wallet={userData.wallet}/>
       <main className="lg:pl-64 pt-16 bgmain">
     <div className="p-6 lg:p-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">{userData.firstName}</h1>
-          <p className="text-muted-foreground">Welcome back, {user.name}</p>
+          <p className="text-muted-foreground">Welcome back, {userData.lastname}</p>
         </div>
         <Button variant="outline" size="icon" onClick={() => setShowBalance(!showBalance)}>
           {showBalance ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -136,7 +136,7 @@ export default function DashboardPage() {
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{showBalance ? stat.value : "••••••"}</div>
+              <div className="text-2xl font-bold">{userData.wallet.balance ? stat.value : "••••••"}</div>
               <p className="flex items-center text-xs text-muted-foreground">
                 {stat.isPositive ? (
                   <ArrowUpRight className="mr-1 h-4 w-4 text-primary" />

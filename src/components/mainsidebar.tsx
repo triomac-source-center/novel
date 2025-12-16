@@ -16,7 +16,7 @@ const navigation = [
   { name: "Wallet", href: "/wallet", icon: Wallet },
 ]
 
-export function Sidebar() {
+export function Sidebar({wallet}) {
   const pathname = usePathname()
   const { logout, user } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -49,7 +49,7 @@ export function Sidebar() {
           <div className="border-b border-border/50 px-6 py-4 bg-primary/5">
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">Total Balance</p>
-              <p className="text-2xl font-bold text-primary">${user?.balance.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-primary">${wallet?.balance.toLocaleString()}</p>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Available</span>
                 <span className="font-medium text-white">${((user?.balance || 0) * 0.7).toLocaleString()}</span>
