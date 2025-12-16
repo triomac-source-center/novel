@@ -17,6 +17,8 @@ export default function WalletPage() {
   const [mounted, setMounted] = useState(false)
   const [depositAmount, setDepositAmount] = useState("")
   const [withdrawAmount, setWithdrawAmount] = useState("")
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   //const userData = useUserData()
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export default function WalletPage() {
   }
 
   const handleDeposit = async () => {
-  if (!amount || Number(amount) <= 0) {
+  if (!depositAmount || Number(depositAmount) <= 0) {
     setError("Invalid amount");
     return;
   }
@@ -49,7 +51,7 @@ export default function WalletPage() {
         },
         body: JSON.stringify({
           clerkId: clerkUser.id,          // 🔑 clé principale
-          amount: Number(amount),    // ⚠️ convertir en Number
+          amount: Number(depositAmount),    // ⚠️ convertir en Number
           description: "Wallet deposit",
         }),
       }
@@ -125,6 +127,7 @@ export default function WalletPage() {
                   />
                 </div>
                 <Button
+                  type="button"
                   size="sm"
                   className="bg-primary hover:bg-primary/90 h-9"
                   onClick={handleDeposit}
