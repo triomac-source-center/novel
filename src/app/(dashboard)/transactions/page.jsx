@@ -71,14 +71,14 @@ export default function HistoryPage() {
           <CardDescription>Complete history of your trading activity</CardDescription>
         </CardHeader>
         <CardContent>
-          {transactions.length === 0 ? (
+          {userData.wallet.transactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-lg font-medium text-muted-foreground">No transactions yet</p>
               <p className="text-sm text-muted-foreground">Start deposit to see your history here</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {transactions.map((trade) => (
+              {userData.wallet.transactions.map((trade) => (
                 <div
                   key={`${trade.createdAt}-${trade.type}`}
                   className="flex items-center justify-between rounded-lg border border-border/50 p-4 transition-colors hover:bg-accent"
