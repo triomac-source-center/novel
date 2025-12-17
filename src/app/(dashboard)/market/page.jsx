@@ -673,15 +673,15 @@ export default function MarketPage() {
                     <div className="rounded-lg bg-muted/50 p-4 space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Available Balance</span>
-                        <span className="font-semibold">${user.balance.toLocaleString()}</span>
+                        <span className="font-semibold">100</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Buying Power</span>
-                        <span className="font-semibold">${(user.balance * 0.7).toLocaleString()}</span>
+                        <span className="font-semibold">100</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Max Shares</span>
-                        <span className="font-semibold">{Math.floor((user.balance * 0.7) / selectedStock.price)}</span>
+                        <span className="font-semibold">100</span>
                       </div>
                     </div>
                   </div>
