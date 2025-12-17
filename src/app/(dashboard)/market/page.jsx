@@ -424,7 +424,7 @@ export default function MarketPage() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {topGainers.map((stock) => (
-                  <div key={stock.symbol} className="flex items-center justify-between text-sm">
+                  <div key={stock.symbol} className="flex items-center justify-between text-sm border-b border-border/50">
                     <span className="font-medium">{stock.symbol}</span>
                     <span className="text-primary">+{stock.changePercent.toFixed(2)}%</span>
                   </div>
