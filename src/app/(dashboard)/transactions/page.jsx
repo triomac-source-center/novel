@@ -76,9 +76,9 @@ export default function HistoryPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-semibold">{trade.type}</p>
-                        <Badge variant={trade.type === "credit" ? "default" : "destructive"} className="capitalize">
-                          {trade.type}
+                        <p className="font-semibold text-xs">{trade.type}</p>
+                        <Badge variant={trade.type === "credit" ? "default" : "destructive"} className="capitalize text-sm">
+                          deposit
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
@@ -88,7 +88,7 @@ export default function HistoryPage() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold">${trade.amount}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {new Date(trade.createdAt).toLocaleString("en-US", {dateStyle: "medium",timeStyle: "short",})} {new Date(trade.createdAt).toLocaleTimeString()}
                     </p>
                   </div>
