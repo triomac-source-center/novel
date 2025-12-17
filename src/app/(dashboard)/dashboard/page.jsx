@@ -135,7 +135,7 @@ export default function DashboardPage() {
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{userData ? userData.wallet.balance  : "••••••"}</div>
+              <div className="text-2xl font-bold">{userData ? userData.wallet.balance.toLocaleString("en-US")  : "••••••"}</div>
               <p className="flex items-center text-xs text-muted-foreground">
                 {stat.isPositive ? (
                   <ArrowUpRight className="mr-1 h-4 w-4 text-primary" />
