@@ -38,9 +38,22 @@
   --sidebar-border: oklch(0.25 0.01 240);
   --sidebar-ring: oklch(0.65 0.2 150);
 }
+
 .bgmain{
   background-color: oklch(0.12 0.01 240);;
 }
+
+
+.invisible-scrollbar::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+}
+
+.invisible-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
 .dark {
   /* Updated dark theme with trading platform colors */
   --background: oklch(0.12 0.01 240);
