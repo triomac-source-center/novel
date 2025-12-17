@@ -408,10 +408,7 @@ export default function MarketPage() {
     .slice(0, 5)
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* <Sidebar /> */}
-      <main className="flex-1 lg:ml-64">
-        <div className="p-6 lg:p-8">
+        <div className="p-6 lg:p-8 bgmain">
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight">Market</h1>
             <p className="text-muted-foreground">Real-time market data and trading</p>
@@ -725,7 +722,5 @@ export default function MarketPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
   )
 }
