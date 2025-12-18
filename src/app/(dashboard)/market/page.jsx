@@ -486,7 +486,7 @@ export default function MarketPage() {
                       <p className="font-medium">${position.currentPrice.toFixed(2)}</p>
                       <p className={`text-xs ${profit >= 0 ? "text-primary" : "text-destructive"}`}>
                         {profit >= 0 ? "+" : ""}
-                        {profit.toFixed(0)} ({profitPercent.toFixed(2)}%)
+                        online
                       </p>
                     </div>
                   </div>
@@ -525,7 +525,7 @@ export default function MarketPage() {
                     </div>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    Pending
+                    complete
                   </Badge>
                 </div>
               ))}
