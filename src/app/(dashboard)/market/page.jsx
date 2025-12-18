@@ -374,6 +374,39 @@ const marketData = [
   },
 ]
 
+const topData = [
+  {
+    symbol: "AAPL",
+    name: "Apple Inc.",
+    price: 178.72,
+    change: 2.34,
+    changePercent: 1.33,
+    volume: "52.3M",
+    category: "tech",
+    marketCap: "2.8T",
+  },
+  {
+    symbol: "GOOGL",
+    name: "Alphabet Inc.",
+    price: 142.83,
+    change: 1.87,
+    changePercent: 1.32,
+    volume: "28.1M",
+    category: "tech",
+    marketCap: "1.8T",
+  },
+  {
+    symbol: "TSLA",
+    name: "Tesla Inc.",
+    price: 248.42,
+    change: -3.21,
+    changePercent: -1.28,
+    volume: "118.5M",
+    category: "auto",
+    marketCap: "788B",
+  }
+]
+
 const positions = [
     { symbol: "AAPL", name: "Apple Inc.", shares: 50, avgPrice: 170, currentPrice: 178.72, type: "long" },
     { symbol: "GOOGL", name: "Alphabet Inc.", shares: 30, avgPrice: 140, currentPrice: 142.83, type: "long" },
@@ -517,12 +550,43 @@ export default function MarketPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {mostActive.map((stock) => (
-                  <div key={stock.symbol} className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{stock.symbol}</span>
-                    <span className="text-muted-foreground">{stock.volume}</span>
-                  </div>
-                ))}
+                {topData.map((stock) => (
+                      <button
+                        key={stock.symbol}
+                        onClick={() => setSelectedStock(stock)}
+                        className={`w-full border-b border-border/50 p-4 text-left transition-colors hover:bg-accent ${
+                          selectedStock.symbol === stock.symbol ? "bg-accent" : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold">{stock.symbol}</p>
+                              <Badge variant="outline" className="text-xs">
+                                {stock.category}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
+                            <p className="text-xs text-muted-foreground mt-1">Vol: {stock.volume}</p>
+                          </div>
+                          <div className="text-right ml-2">
+                            <p className="font-semibold">${stock.price}</p>
+                            <p
+                              className={`flex items-center justify-end text-sm ${stock.change >= 0 ? "text-primary" : "text-destructive"}`}
+                            >
+                              {stock.change >= 0 ? (
+                                <TrendingUp className="mr-1 h-3 w-3" />
+                              ) : (
+                                <TrendingDown className="mr-1 h-3 w-3" />
+                              )}
+                              {stock.change >= 0 ? "+" : ""}
+                              {stock.change.toFixed(2)} ({stock.changePercent >= 0 ? "+" : ""}
+                              {stock.changePercent.toFixed(2)}%)
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
               </CardContent>
             </Card>
           </div>
