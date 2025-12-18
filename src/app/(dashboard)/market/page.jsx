@@ -381,6 +381,12 @@ const positions = [
     { symbol: "MSFT", name: "Microsoft Corp.", shares: 40, avgPrice: 365, currentPrice: 378.91, type: "long" }
   ]
 
+  const pendingOrders = [
+    { symbol: "AAPL", type: "Buy Limit", price: 175.0, shares: 25, status: "pending" },
+    { symbol: "TSLA", type: "Sell Stop", price: 245.0, shares: 10, status: "pending" },
+    { symbol: "NVDA", type: "Buy Limit", price: 490.0, shares: 5, status: "pending" },
+    { symbol: "META", type: "Sell Limit", price: 515.0, shares: 8, status: "pending" },
+  ]
 export default function MarketPage() {
   const { user } = useAuth()
   const router = useRouter()
@@ -416,11 +422,6 @@ export default function MarketPage() {
 
   return (
         <div className="p-6 lg:p-8 bgmain">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Market</h1>
-            <p className="text-muted-foreground">Real-time market data and trading</p>
-          </div>
-
           <div className="mb-6 grid gap-4 md:grid-cols-3">
             <Card className="border-border/50">
               <CardHeader className="pb-3">
@@ -479,12 +480,32 @@ export default function MarketPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {topLosers.map((stock) => (
-                  <div key={stock.symbol} className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{stock.symbol}</span>
-                    <span className="text-destructive">{stock.changePercent.toFixed(2)}%</span>
+                {pendingOrders.map((order, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-sm font-semibold">
+                      {order.symbol.substring(0, 2)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{order.symbol}</p>
+                        <Badge variant="outline" className="text-xs">
+                          {order.type}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {order.shares} shares @ ${order.price}
+                      </p>
+                    </div>
                   </div>
-                ))}
+                  <Badge variant="secondary" className="text-xs">
+                    Pending
+                  </Badge>
+                </div>
+              ))}
               </CardContent>
             </Card>
 
