@@ -116,7 +116,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 lg:p-8 bgmain">
-      <div className="mb-8 flex items-center justify-between">
+      {/* <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">{userData.firstName}</h1>
           <p className="text-muted-foreground">Welcome back, {userData.lastname}</p>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
         <Button variant="outline" size="icon" onClick={() => setShowBalance(!showBalance)}>
           {showBalance ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
         </Button>
-      </div>
+      </div> */}
 
       {/* Stats Grid */}
       <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">

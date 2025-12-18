@@ -374,6 +374,13 @@ const marketData = [
   },
 ]
 
+const positions = [
+    { symbol: "AAPL", name: "Apple Inc.", shares: 50, avgPrice: 170, currentPrice: 178.72, type: "long" },
+    { symbol: "GOOGL", name: "Alphabet Inc.", shares: 30, avgPrice: 140, currentPrice: 142.83, type: "long" },
+    { symbol: "TSLA", name: "Tesla Inc.", shares: 20, avgPrice: 252, currentPrice: 248.42, type: "short" },
+    { symbol: "MSFT", name: "Microsoft Corp.", shares: 40, avgPrice: 365, currentPrice: 378.91, type: "long" }
+  ]
+
 export default function MarketPage() {
   const { user } = useAuth()
   const router = useRouter()
@@ -423,12 +430,44 @@ export default function MarketPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {topGainers.map((stock) => (
-                  <div key={stock.symbol} className="flex items-center justify-between text-sm border-b border-border/50">
-                    <span className="font-medium">{stock.symbol}</span>
-                    <span className="text-primary">+{stock.changePercent.toFixed(2)}%</span>
+                {positions.map((position) => {
+                const profit =
+                  (position.currentPrice - position.avgPrice) * position.shares * (position.type === "short" ? -1 : 1)
+                const profitPercent =
+                  ((position.currentPrice - position.avgPrice) / position.avgPrice) *
+                  100 *
+                  (position.type === "short" ? -1 : 1)
+                return (
+                  <div
+                    key={position.symbol}
+                    className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold text-sm">
+                        {position.symbol.substring(0, 2)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{position.symbol}</p>
+                          <Badge variant={position.type === "long" ? "default" : "destructive"} className="text-xs">
+                            {position.type}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {position.shares} shares @ ${position.avgPrice}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">${position.currentPrice.toFixed(2)}</p>
+                      <p className={`text-xs ${profit >= 0 ? "text-primary" : "text-destructive"}`}>
+                        {profit >= 0 ? "+" : ""}
+                        {profit.toFixed(0)} ({profitPercent.toFixed(2)}%)
+                      </p>
+                    </div>
                   </div>
-                ))}
+                )
+              })}
               </CardContent>
             </Card>
 
