@@ -394,31 +394,21 @@ const topData = [
     volume: "28.1M",
     category: "tech",
     marketCap: "1.8T",
-  },
-  {
-    symbol: "TSLA",
-    name: "Tesla Inc.",
-    price: 248.42,
-    change: -3.21,
-    changePercent: -1.28,
-    volume: "118.5M",
-    category: "auto",
-    marketCap: "788B",
   }
 ]
 
 const positions = [
-    { symbol: "AAPL", name: "Apple Inc.", shares: 50, avgPrice: 170, currentPrice: 178.72, type: "long" },
-    { symbol: "GOOGL", name: "Alphabet Inc.", shares: 30, avgPrice: 140, currentPrice: 142.83, type: "long" },
-    { symbol: "TSLA", name: "Tesla Inc.", shares: 20, avgPrice: 252, currentPrice: 248.42, type: "short" },
-    { symbol: "MSFT", name: "Microsoft Corp.", shares: 40, avgPrice: 365, currentPrice: 378.91, type: "long" }
+    { symbol: "aapl", name: "Apple Inc.", shares: 50, avgPrice: 170, currentPrice: 178.72, type: "long" },
+    { symbol: "googl", name: "Alphabet Inc.", shares: 30, avgPrice: 140, currentPrice: 142.83, type: "long" },
+    { symbol: "tsla", name: "Tesla Inc.", shares: 20, avgPrice: 252, currentPrice: 248.42, type: "short" },
+    { symbol: "msft", name: "Microsoft Corp.", shares: 40, avgPrice: 365, currentPrice: 378.91, type: "long" }
   ]
 
   const pendingOrders = [
-    { symbol: "AAPL", type: "Buy Limit", price: 175.0, shares: 25, status: "pending" },
-    { symbol: "TSLA", type: "Sell Stop", price: 245.0, shares: 10, status: "pending" },
-    { symbol: "NVDA", type: "Buy Limit", price: 490.0, shares: 5, status: "pending" },
-    { symbol: "META", type: "Sell Limit", price: 515.0, shares: 8, status: "pending" },
+    { symbol: "aapl", type: "Buy Limit", price: 175.0, shares: 25, status: "pending" },
+    { symbol: "tsla", type: "Sell Stop", price: 245.0, shares: 10, status: "pending" },
+    { symbol: "nvda", type: "Buy Limit", price: 490.0, shares: 5, status: "pending" },
+    { symbol: "meta", type: "Sell Limit", price: 515.0, shares: 8, status: "pending" },
   ]
 export default function MarketPage() {
   const { user } = useAuth()
@@ -483,9 +473,9 @@ export default function MarketPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{position.symbol}</p>
-                          <Badge variant={position.type === "long" ? "default" : "destructive"} className="text-xs">
+                          {/* <Badge variant={position.type === "long" ? "default" : "destructive"} className="text-xs">
                             {position.type}
-                          </Badge>
+                          </Badge> */}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {position.shares} shares @ ${position.avgPrice}
@@ -553,9 +543,8 @@ export default function MarketPage() {
                 {topData.map((stock) => (
                       <button
                         key={stock.symbol}
-                        onClick={() => setSelectedStock(stock)}
-                        className={`w-full border-b border-border/50 p-4 text-left transition-colors hover:bg-accent ${
-                          selectedStock.symbol === stock.symbol ? "bg-accent" : ""
+                        className={`w-full border-b border-border/50 p-4 text-left transition-colors ${
+                          topData.indexOf(stock) === 0 ? "bg-accent" : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
