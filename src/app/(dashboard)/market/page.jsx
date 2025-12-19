@@ -484,8 +484,7 @@ export default function MarketPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium">${position.currentPrice.toFixed(2)}</p>
-                      <p className={`text-xs ${profit >= 0 ? "text-primary" : "text-destructive"}`}>
-                        {profit >= 0 ? "+" : ""}
+                      <p className={`text-xs font-bold ${profit >= 0 ? "text-primary" : "text-destructive"}`}>
                         online
                       </p>
                     </div>
@@ -516,11 +515,11 @@ export default function MarketPage() {
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{order.symbol}</p>
                         <Badge variant="outline" className="text-xs">
-                          {order.type}
+                          offline
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {order.shares} shares @ ${order.price}
+                        {order.shares} shares | ${order.price}
                       </p>
                     </div>
                   </div>
@@ -543,9 +542,7 @@ export default function MarketPage() {
                 {topData.map((stock) => (
                       <button
                         key={stock.symbol}
-                        className={`w-full border-b border-border/50 p-4 text-left transition-colors ${
-                          topData.indexOf(stock) === 0 ? "bg-accent" : ""
-                        }`}
+                        className={`w-full border-b border-border/50 p-4 text-left transition-colors bg-accent`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
