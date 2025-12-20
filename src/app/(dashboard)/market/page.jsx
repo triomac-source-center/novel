@@ -415,6 +415,7 @@ export default function MarketPage() {
 
   const { user: clerkUser, isSignedIn } = useUser();
   const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
