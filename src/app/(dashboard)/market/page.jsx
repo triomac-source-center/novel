@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowUpRight, ArrowDownRight, Search, TrendingUp, TrendingDown, Star } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { useUser } from "@clerk/nextjs"
 
 const marketData = [
   {
@@ -411,6 +412,9 @@ const positions = [
     { symbol: "meta", type: "Sell Limit", price: 515.0, shares: 8, status: "pending" },
   ]
 export default function MarketPage() {
+
+  const { user: clerkUser, isSignedIn } = useUser();
+  const [userData, setUserData] = useState(null);
   const { user } = useAuth()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
@@ -419,15 +423,27 @@ export default function MarketPage() {
   const [activeTab, setActiveTab] = useState("all")
 
   useEffect(() => {
-    setMounted(true)
-    if (!user) {
-      router.push("/login")
-    }
-  }, [user, router])
+    if (!clerkUser) return;
 
-  if (!mounted || !user) {
-    return null
-  }
+    async function fetchUser() {
+      try {
+        const res = await fetch(`https://novel-server-cdcp.onrender.com/api/all/clusters`);
+        const data = await res.json();
+        setUserData(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchUser();
+  }, [clerkUser]);
+
+  if (!isSignedIn) return <p>Please log in</p>;
+  if (loading) return <p>Loading...</p>;
+  if (!userData) return <p>User not found</p>;
+
 
   const filteredData = marketData.filter((stock) => {
     const matchesSearch =
@@ -635,7 +651,7 @@ export default function MarketPage() {
                     </TabsList>
                   </Tabs>
                   <div className="max-h-[800px] overflow-y-auto invisible-scrollbar">
-                    {filteredData.map((stock) => (
+                    {userData.map((stock) => (
                       <button
                         key={stock.symbol}
                         onClick={() => setSelectedStock(stock)}
@@ -648,25 +664,25 @@ export default function MarketPage() {
                             <div className="flex items-center gap-2">
                               <p className="font-semibold">{stock.symbol}</p>
                               <Badge variant="outline" className="text-xs">
-                                {stock.category}
+                                {stock.algorythm}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
-                            <p className="text-xs text-muted-foreground mt-1">Vol: {stock.volume}</p>
+                            <p className="text-sm text-muted-foreground truncate">{stock.algorythm}</p>
+                            <p className="text-xs text-muted-foreground mt-1">Vol: {stock.expVolume}</p>
                           </div>
                           <div className="text-right ml-2">
-                            <p className="font-semibold">${stock.price}</p>
+                            <p className="font-semibold">${stock.entryPoint}</p>
                             <p
-                              className={`flex items-center justify-end text-sm ${stock.change >= 0 ? "text-primary" : "text-destructive"}`}
+                              className={`flex items-center justify-end text-sm ${stock.holderRemain >= 0 ? "text-primary" : "text-destructive"}`}
                             >
-                              {stock.change >= 0 ? (
+                              {stock.holderRemain >= 0 ? (
                                 <TrendingUp className="mr-1 h-3 w-3" />
                               ) : (
                                 <TrendingDown className="mr-1 h-3 w-3" />
                               )}
-                              {stock.change >= 0 ? "+" : ""}
-                              {stock.change.toFixed(2)} ({stock.changePercent >= 0 ? "+" : ""}
-                              {stock.changePercent.toFixed(2)}%)
+                              {stock.holderRemain >= 0 ? "+" : ""}
+                              {stock.holderRemain.toFixed(2)} ({stock.actualVolume >= 0 ? "+" : ""}
+                              {stock.actualVolume.toFixed(2)}%)
                             </p>
                           </div>
                         </div>
