@@ -672,7 +672,7 @@ export default function MarketPage() {
                         key={stock.symbol}
                         onClick={() => setSelectedStock(stock)}
                         className={`w-full border-b border-border/50 p-4 text-left transition-colors hover:bg-accent ${
-                          selectedStock.symbol === stock.symbol ? "bg-accent" : ""
+                          selectedStock.signature === stock.signature ? "bg-accent" : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
