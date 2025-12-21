@@ -14,6 +14,21 @@ import { useUser } from "@clerk/nextjs"
 
 const marketData = [
   {
+      holderPoint: 5,
+      entryPoint: 7,
+      holders: [],
+      expVolume: 35,
+      actualVolume: 0,
+      holderRemain: 5,
+      creator: "user_36th2gls87icMXDLg7CH4HcmThE",
+      status: "offline",
+      symbol: "CENL",
+      recette: 6,
+      algorythm: "mean-reversion",
+      signature: "DNW4ZI5T3VOU7OA",
+      createdAt: "2025-12-20T01:37:52.932Z",
+    },
+  {
     symbol: "AAPL",
     name: "Apple Inc.",
     price: 178.72,
@@ -706,21 +721,21 @@ export default function MarketPage() {
                           <Star className="h-4 w-4" />
                         </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground">{selectedStock.name}</p>
+                      <p className="text-sm text-muted-foreground">{selectedStock.signature}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-bold">${selectedStock.price}</p>
+                      <p className="text-3xl font-bold">${selectedStock.entryPoint}</p>
                       <p
-                        className={`flex items-center justify-end text-sm ${selectedStock.change >= 0 ? "text-primary" : "text-destructive"}`}
+                        className={`flex items-center justify-end text-sm ${selectedStock.holderRemain >= 0 ? "text-primary" : "text-destructive"}`}
                       >
                         {selectedStock.change >= 0 ? (
                           <ArrowUpRight className="mr-1 h-4 w-4" />
                         ) : (
                           <ArrowDownRight className="mr-1 h-4 w-4" />
                         )}
-                        {selectedStock.change >= 0 ? "+" : ""}
-                        {selectedStock.change.toFixed(2)} ({selectedStock.changePercent >= 0 ? "+" : ""}
-                        {selectedStock.changePercent.toFixed(2)}%)
+                        {selectedStock.holderRemain >= 0 ? "+" : ""}
+                        {selectedStock.holderRemain.toFixed(2)} ({selectedStock.actualVolume >= 0 ? "+" : ""}
+                        {selectedStock.actualVolume.toFixed(2)}%)
                       </p>
                     </div>
                   </div>
@@ -730,32 +745,32 @@ export default function MarketPage() {
                     <div className="rounded-lg bg-secondary/50 p-3">
                       <p className="text-xs text-muted-foreground">Open</p>
                       <p className="text-lg font-semibold">
-                        ${(selectedStock.price - selectedStock.change).toFixed(2)}
+                        ${(selectedStock.entryPoint - selectedStock.holderRemain).toFixed(2)}
                       </p>
                     </div>
                     <div className="rounded-lg bg-secondary/50 p-3">
                       <p className="text-xs text-muted-foreground">High</p>
                       <p className="text-lg font-semibold">
-                        ${(selectedStock.price + Math.abs(selectedStock.change) * 0.5).toFixed(2)}
+                        ${(selectedStock.entryPoint + Math.abs(selectedStock.holderRemain) * 0.5).toFixed(2)}
                       </p>
                     </div>
                     <div className="rounded-lg bg-secondary/50 p-3">
                       <p className="text-xs text-muted-foreground">Low</p>
                       <p className="text-lg font-semibold">
-                        ${(selectedStock.price - Math.abs(selectedStock.change) * 0.8).toFixed(2)}
+                        ${(selectedStock.entryPoint - Math.abs(selectedStock.holderRemain) * 0.8).toFixed(2)}
                       </p>
                     </div>
                     <div className="rounded-lg bg-secondary/50 p-3">
                       <p className="text-xs text-muted-foreground">Close</p>
-                      <p className="text-lg font-semibold">${selectedStock.price.toFixed(2)}</p>
+                      <p className="text-lg font-semibold">${selectedStock.entryPoint.toFixed(2)}</p>
                     </div>
                     <div className="rounded-lg bg-secondary/50 p-3">
                       <p className="text-xs text-muted-foreground">Volume</p>
-                      <p className="text-lg font-semibold">{selectedStock.volume}</p>
+                      <p className="text-lg font-semibold">{selectedStock.actualVolume}</p>
                     </div>
                     <div className="rounded-lg bg-secondary/50 p-3">
                       <p className="text-xs text-muted-foreground">Market Cap</p>
-                      <p className="text-lg font-semibold">${selectedStock.marketCap}</p>
+                      <p className="text-lg font-semibold">${selectedStock.holderRemain}</p>
                     </div>
                     <div className="rounded-lg bg-secondary/50 p-3">
                       <p className="text-xs text-muted-foreground">P/E Ratio</p>
@@ -763,7 +778,7 @@ export default function MarketPage() {
                     </div>
                     <div className="rounded-lg bg-secondary/50 p-3">
                       <p className="text-xs text-muted-foreground">52W High</p>
-                      <p className="text-lg font-semibold">${(selectedStock.price * 1.25).toFixed(2)}</p>
+                      <p className="text-lg font-semibold">${(selectedStock.entryPoint * 1.25).toFixed(2)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -824,7 +839,7 @@ export default function MarketPage() {
                       <div className="space-y-1">
                         {[...Array(5)].map((_, i) => (
                           <div key={i} className="flex justify-between text-xs">
-                            <span className="text-primary">${(selectedStock.price - (i + 1) * 0.5).toFixed(2)}</span>
+                            <span className="text-primary">${(selectedStock.entryPoint - (i + 1) * 0.5).toFixed(2)}</span>
                             <span className="text-muted-foreground">{(Math.random() * 1000).toFixed(0)}</span>
                           </div>
                         ))}
@@ -836,7 +851,7 @@ export default function MarketPage() {
                         {[...Array(5)].map((_, i) => (
                           <div key={i} className="flex justify-between text-xs">
                             <span className="text-destructive">
-                              ${(selectedStock.price + (i + 1) * 0.5).toFixed(2)}
+                              ${(selectedStock.entryPoint + (i + 1) * 0.5).toFixed(2)}
                             </span>
                             <span className="text-muted-foreground">{(Math.random() * 1000).toFixed(0)}</span>
                           </div>
