@@ -652,7 +652,7 @@ export default function MarketPage() {
                     </TabsList>
                   </Tabs>
                   <div className="max-h-[800px] overflow-y-auto invisible-scrollbar">
-                    {userData.map((stock) => (
+                    {userData.data.map((stock) => (
                       <button
                         key={stock.symbol}
                         onClick={() => setSelectedStock(stock)}
