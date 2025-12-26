@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowUpRight, ArrowDownRight, Search, TrendingUp, TrendingDown, Star } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useUser } from "@clerk/nextjs"
+import MainDrawer from "@/components/maindrawer"
 
 const marketData = [
   {
@@ -437,6 +438,7 @@ export default function MarketPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStock, setSelectedStock] = useState(marketData[0])
   const [activeTab, setActiveTab] = useState("all")
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     if (!clerkUser) return;
@@ -795,7 +797,7 @@ export default function MarketPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <Button
                         className="h-12 bg-primary text-primary-foreground hover:bg-primary/90"
-                        onClick={() => router.push(`/market/trade?symbol=${selectedStock.symbol}&type=buy`)}
+                        onClick={() => setOpen(true)}
                       >
                         <TrendingUp className="mr-2 h-4 w-4" />
                         Buy
@@ -863,6 +865,7 @@ export default function MarketPage() {
               </Card>
             </div>
           </div>
+          <MainDrawer open={open} setOpen={setOpen}/>
         </div>
   )
 }
