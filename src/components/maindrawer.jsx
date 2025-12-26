@@ -45,7 +45,7 @@ const team = [
 export default function MainDrawer({open, setOpen}) {
 
   return (
-      <Dialog open={open} onClose={setOpen} className="relative z-10">
+      <Dialog open={open} onClose={setOpen} className="relative z-50">
         <div className="fixed inset-0" />
 
         <div className="fixed inset-0 overflow-hidden">
@@ -94,23 +94,6 @@ export default function MainDrawer({open, setOpen}) {
                                 name="project-name"
                                 type="text"
                                 className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label
-                              htmlFor="project-description"
-                              className="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
-                            >
-                              Description
-                            </label>
-                            <div className="mt-2">
-                              <textarea
-                                id="project-description"
-                                name="project-description"
-                                rows={3}
-                                className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"
-                                defaultValue={''}
                               />
                             </div>
                           </div>
@@ -193,31 +176,6 @@ export default function MainDrawer({open, setOpen}) {
                                       className="text-gray-500 dark:text-gray-400"
                                     >
                                       Only members of this project would be able to access.
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                              <div>
-                                <div className="relative flex items-start">
-                                  <div className="absolute flex h-6 items-center">
-                                    <input
-                                      defaultValue="private"
-                                      id="privacy-private"
-                                      name="privacy"
-                                      type="radio"
-                                      aria-describedby="privacy-private-to-project-description"
-                                      className="relative size-4 appearance-none rounded-full border border-gray-300 before:absolute before:inset-1 before:rounded-full before:bg-white not-checked:before:hidden checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 dark:border-white/20 dark:bg-black/10 dark:checked:border-indigo-500 dark:checked:bg-indigo-500 dark:focus-visible:outline-indigo-500 dark:disabled:border-white/10 dark:disabled:bg-gray-800 dark:disabled:before:bg-white/20 forced-colors:appearance-auto forced-colors:before:hidden"
-                                    />
-                                  </div>
-                                  <div className="pl-7 text-sm/6">
-                                    <label
-                                      htmlFor="privacy-private"
-                                      className="font-medium text-gray-900 dark:text-gray-100"
-                                    >
-                                      Private to you
-                                    </label>
-                                    <p id="privacy-private-description" className="text-gray-500 dark:text-gray-400">
-                                      You are the only one able to access this project.
                                     </p>
                                   </div>
                                 </div>
