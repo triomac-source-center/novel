@@ -59,7 +59,7 @@ export default function MainDrawer({open, setOpen}) {
                   <div className="h-0 flex-1 overflow-y-auto">
                     <div className="bg-indigo-700 px-4 py-6 sm:px-6 dark:bg-indigo-800">
                       <div className="flex items-center justify-between">
-                        <DialogTitle className="text-base font-semibold text-white">New project</DialogTitle>
+                        <DialogTitle className="text-base font-semibold text-white">Take position</DialogTitle>
                         <div className="ml-3 flex h-7 items-center">
                           <button
                             type="button"
@@ -86,12 +86,13 @@ export default function MainDrawer({open, setOpen}) {
                               htmlFor="project-name"
                               className="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
                             >
-                              Project name
+                              Quantity
                             </label>
                             <div className="mt-2">
                               <input
                                 id="project-name"
                                 name="project-name"
+                                placeholder='1'
                                 type="text"
                                 className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500"
                               />
@@ -99,31 +100,8 @@ export default function MainDrawer({open, setOpen}) {
                           </div>
                           <div>
                             <h3 className="text-sm/6 font-medium text-gray-900 dark:text-gray-100">Team Members</h3>
-                            <div className="mt-2">
-                              <div className="flex space-x-2">
-                                {team.map((person) => (
-                                  <a
-                                    key={person.email}
-                                    href={person.href}
-                                    className="relative rounded-full hover:opacity-75"
-                                  >
-                                    <img
-                                      alt={person.name}
-                                      src={person.imageUrl}
-                                      className="inline-block size-8 rounded-full bg-gray-100 outline -outline-offset-1 outline-black/5 dark:bg-gray-800 dark:outline-white/10"
-                                    />
-                                  </a>
-                                ))}
-                                <button
-                                  type="button"
-                                  className="relative inline-flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-gray-200 bg-white text-gray-400 hover:border-gray-300 hover:text-gray-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:border-white/20 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-white/30 dark:hover:text-gray-200 dark:focus-visible:outline-indigo-500"
-                                >
-                                  <span className="absolute -inset-2" />
-                                  <span className="sr-only">Add team member</span>
-                                  <PlusIcon aria-hidden="true" className="size-5" />
-                                </button>
-                              </div>
-                            </div>
+                            <h3 className="text-sm/6 font-medium text-gray-500 dark:text-gray-100">KN95FZ8I1BD1ZMN</h3>
+                            <h3 className="text-sm/6 font-medium text-gray-500 dark:text-gray-100">7$</h3>
                           </div>
                           <fieldset>
                             <legend className="text-sm/6 font-medium text-gray-900 dark:text-gray-100">Privacy</legend>
