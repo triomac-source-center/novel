@@ -1,57 +1,55 @@
 "use client"
-import {  useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp, Activity, Wallet, Eye, EyeOff } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp, Activity, Wallet } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Header } from "@/components/mainheader"
-import { Sidebar } from "@/components/mainsidebar"
 import { useUser } from "@clerk/nextjs"
-import MainLayoutDashboard from "../layout"
+import { fetchUserProfile } from "@/lib/api-client"
 
 export default function DashboardPage() {
-
-  const { user: clerkUser, isSignedIn } = useUser();
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user: clerkUser, isSignedIn } = useUser()
+  const [userData, setUserData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const { user } = useAuth()
-  const [showBalance, setShowBalance] = useState(true)
 
   useEffect(() => {
-    if (!clerkUser) return;
+    if (!clerkUser) return
 
     async function fetchUser() {
       try {
-        const res = await fetch(`https://novel-server-cdcp.onrender.com/api/${clerkUser.id}`);
-        const data = await res.json();
-        setUserData(data);
+        setLoading(true)
+        setError("")
+        const data = await fetchUserProfile(clerkUser.id)
+        setUserData(data)
       } catch (err) {
-        console.error(err);
+        console.error(err)
+        setError("Impossible de charger les informations du profil pour le moment.")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    fetchUser();
-  }, [clerkUser]);
+    fetchUser()
+  }, [clerkUser])
 
   if (!user) {
     return null
   }
 
-  if (!isSignedIn) return <p>Please log in</p>;
-  if (loading) return <p>Loading...</p>;
-  if (!userData) return <p>User not found</p>;
+  if (!isSignedIn) return <p>Please log in</p>
+  if (loading) return <p>Loading...</p>
+  if (error) return <p>{error}</p>
+  if (!userData) return <p>User not found</p>
 
-  if (!user) {
-    return null
-  }
+  const walletBalance = userData?.wallet?.balance ?? user.balance
+  const availableFunds = Math.round(walletBalance * 0.7)
 
   const stats = [
     {
       title: "Total Balance",
-      value: `$${user.balance.toLocaleString()}`,
+      value: `$${walletBalance.toLocaleString()}`,
       change: "+12.5%",
       isPositive: true,
       icon: DollarSign,
@@ -72,7 +70,7 @@ export default function DashboardPage() {
     },
     {
       title: "Available Funds",
-      value: `$${(user.balance * 0.7).toLocaleString()}`,
+      value: `$${availableFunds.toLocaleString()}`,
       change: "-5.1%",
       isPositive: false,
       icon: Wallet,
@@ -300,15 +298,15 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center pb-3 border-b border-border/50">
                 <span className="text-sm text-muted-foreground">Total Equity</span>
-                <span className="font-semibold">${showBalance ? user.balance.toLocaleString() : "••••••"}</span>
+                <span className="font-semibold">${showBalance ? walletBalance.toLocaleString() : "••••••"}</span>
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-border/50">
                 <span className="text-sm text-muted-foreground">Cash Balance</span>
-                <span className="font-semibold">${showBalance ? (user.balance * 0.7).toLocaleString() : "••••••"}</span>
+                <span className="font-semibold">${showBalance ? availableFunds.toLocaleString() : "••••••"}</span>
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-border/50">
                 <span className="text-sm text-muted-foreground">Margin Used</span>
-                <span className="font-semibold">${showBalance ? (user.balance * 0.3).toLocaleString() : "••••••"}</span>
+                <span className="font-semibold">${showBalance ? (walletBalance - availableFunds).toLocaleString() : "••••••"}</span>
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-border/50">
                 <span className="text-sm text-muted-foreground">Day's P/L</span>

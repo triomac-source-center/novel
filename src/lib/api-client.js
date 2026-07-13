@@ -1,0 +1,41 @@
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://novel-server-cdcp.onrender.com"
+
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, {
+    cache: "no-store",
+    headers: {
+      Accept: "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  })
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(message || "Request failed")
+  }
+
+  return response.json()
+}
+
+export async function fetchUserProfile(clerkId) {
+  if (!clerkId) {
+    throw new Error("Missing clerk id")
+  }
+
+  return requestJson(`${API_BASE_URL}/api/${encodeURIComponent(clerkId)}`)
+}
+
+export async function postDeposit(payload) {
+  return requestJson(`${API_BASE_URL}/api/deposit`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function fetchClusters() {
+  return requestJson(`${API_BASE_URL}/api/all/clusters`)
+}
