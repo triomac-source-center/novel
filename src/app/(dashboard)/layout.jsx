@@ -24,12 +24,26 @@ export default function MainLayoutDashboard({ children }) {
         setError("")
         const data = await fetchAccount(clerkUser.id, "real")
         if (isActive) {
-          setUserData(data)
+          const normalized = {
+            ...data,
+            username: data?.username || data?.name || clerkUser?.fullName || "User",
+            email: data?.email || clerkUser?.emailAddresses?.[0]?.emailAddress || "",
+            wallet: {
+              ...(data?.wallet || {}),
+              balance: Number(data?.wallet?.balance ?? data?.balance ?? data?.account?.balance ?? 0),
+            },
+          }
+          setUserData(normalized)
         }
       } catch (err) {
         console.error(err)
         if (isActive) {
-          setError("Unable to load your profile data.")
+          setUserData({
+            username: clerkUser?.fullName || "User",
+            email: clerkUser?.emailAddresses?.[0]?.emailAddress || "",
+            wallet: { balance: 0, transactions: [] },
+          })
+          setError("")
         }
       } finally {
         if (isActive) {
@@ -57,8 +71,23 @@ export default function MainLayoutDashboard({ children }) {
   }
 
   if (!isSignedIn) return <p>Please log in</p>
-  if (loading) return <p>Loading...</p>
-  if (error) return <p>{error}</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bgmain p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="h-16 animate-pulse rounded-2xl border border-border/50 bg-background/70" />
+          <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+            <div className="h-80 animate-pulse rounded-2xl border border-border/50 bg-background/70" />
+            <div className="space-y-4">
+              <div className="h-32 animate-pulse rounded-2xl border border-border/50 bg-background/70" />
+              <div className="h-24 animate-pulse rounded-2xl border border-border/50 bg-background/70" />
+              <div className="h-24 animate-pulse rounded-2xl border border-border/50 bg-background/70" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
   if (!userData) return <p>User not found</p>
 
   return (

@@ -1,21 +1,30 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://novel-server-cdcp.onrender.com"
 
 async function requestJson(url, options = {}) {
-  const response = await fetch(url, {
-    cache: "no-store",
-    headers: {
-      Accept: "application/json",
-      ...(options.headers || {}),
-    },
-    ...options,
-  })
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        ...(options.headers || {}),
+      },
+      ...options,
+    })
 
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || "Request failed")
+    const text = await response.text()
+
+    if (!response.ok) {
+      throw new Error(text || "Request failed")
+    }
+
+    try {
+      return text ? JSON.parse(text) : null
+    } catch {
+      return { raw: text }
+    }
+  } catch (error) {
+    throw error
   }
-
-  return response.json()
 }
 
 export async function fetchUserProfile(clerkId) {
