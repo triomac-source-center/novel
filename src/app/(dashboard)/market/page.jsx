@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Search, TrendingUp, TrendingDown, Wallet, CircleDollarSign, Sparkles } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 
 const demoClusters = [
@@ -69,6 +70,7 @@ function normalizeCluster(cluster, index) {
 
 export default function MarketPage() {
   const { user: clerkUser, isSignedIn } = useUser()
+  const router = useRouter()
   const [clusters, setClusters] = useState(demoClusters)
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -268,6 +270,12 @@ export default function MarketPage() {
                       <span>{metrics.remainingCells} cells left</span>
                       <span>{cluster.cellCount} total cells</span>
                       <span>{formatCurrency(cluster.cellValue)} per cell</span>
+                    </div>
+
+                    <div className="mt-3 flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => router.push(`/market/${getClusterId(cluster, 0)}`)}>
+                        View details
+                      </Button>
                     </div>
                   </button>
                 )
