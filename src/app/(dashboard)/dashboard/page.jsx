@@ -12,6 +12,7 @@ export default function DashboardPage() {
   const [userData, setUserData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [showBalance, setShowBalance] = useState(true)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -28,9 +29,10 @@ export default function DashboardPage() {
         setError("Impossible de charger les informations du profil pour le moment.")
       } finally {
         setLoading(false)
-      }
+      } 
     }
 
+    
     fetchUser()
   }, [clerkUser])
 
