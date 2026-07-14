@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -90,7 +91,7 @@ export default function DashboardPage() {
     return () => {
       isActive = false
     }
-  }, [clerkUser?.id, isSignedIn])
+  }, [clerkUser?.id, clerkUser?.emailAddresses, clerkUser?.fullName, isSignedIn])
 
   useEffect(() => {
     let isActive = true
@@ -362,22 +363,22 @@ export default function DashboardPage() {
             <CardDescription>Jump directly to wallet, market or transactions</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
-            <a href="/wallet" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
+            <Link href="/wallet" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
               <p className="font-medium">Go to Wallet</p>
               <p className="text-xs text-muted-foreground">Manage real and demo balances</p>
-            </a>
-            <a href="/market" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
+            </Link>
+            <Link href="/market" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
               <p className="font-medium">Open Market</p>
               <p className="text-xs text-muted-foreground">See available clusters</p>
-            </a>
-            <a href="/transactions" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
+            </Link>
+            <Link href="/transactions" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
               <p className="font-medium">View Transactions</p>
               <p className="text-xs text-muted-foreground">See account history</p>
-            </a>
-            <a href="/profile" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
+            </Link>
+            <Link href="/profile" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
               <p className="font-medium">Profile</p>
               <p className="text-xs text-muted-foreground">Manage your personal info</p>
-            </a>
+            </Link>
           </CardContent>
         </Card>
 

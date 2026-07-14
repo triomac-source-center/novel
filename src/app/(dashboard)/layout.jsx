@@ -64,7 +64,7 @@ export default function MainLayoutDashboard({ children }) {
       isActive = false
       window.removeEventListener("wallet-balance-updated", handleBalanceRefresh)
     }
-  }, [clerkUser?.id, isSignedIn])
+  }, [clerkUser?.id, clerkUser?.emailAddresses, clerkUser?.fullName, isSignedIn])
 
   if (!user) {
     return null
