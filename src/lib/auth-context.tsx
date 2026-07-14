@@ -3,6 +3,12 @@
 import type React from "react"
 import { createContext, useContext, useState } from "react"
 
+interface BalanceUpdateEvent extends CustomEvent {
+  detail?: {
+    balance?: number
+  }
+}
+
 interface User {
   id: string
   email: string
@@ -33,6 +39,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>(defaultUser) // user par défaut
 
+  const emitBalanceUpdate = (balance: number) => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("wallet-balance-updated", { detail: { balance } }))
+    }
+  }
+
   const login = async (email: string, password: string): Promise<boolean> => {
     // Simule un login : retourne toujours le user par défaut
     setUser(defaultUser)
@@ -56,7 +68,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const updateUser = (updates: Partial<User>) => {
-    setUser({ ...user, ...updates })
+    setUser((current) => {
+      const nextUser = { ...current, ...updates }
+      if (typeof updates.balance === "number") {
+        emitBalanceUpdate(nextUser.balance)
+      }
+      return nextUser
+    })
   }
 
   return (

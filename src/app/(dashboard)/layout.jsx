@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Header } from "@/components/mainheader"
 import { Sidebar } from "@/components/mainsidebar"
 import { useUser } from "@clerk/nextjs"
-import { fetchUserProfile } from "@/lib/api-client"
+import { fetchAccount } from "@/lib/api-client"
 
 export default function MainLayoutDashboard({ children }) {
   const { user: clerkUser, isSignedIn } = useUser()
@@ -14,24 +14,43 @@ export default function MainLayoutDashboard({ children }) {
   const { user } = useAuth()
 
   useEffect(() => {
-    if (!clerkUser) return
+    if (!clerkUser?.id || !isSignedIn) return
+
+    let isActive = true
 
     async function fetchUser() {
       try {
         setLoading(true)
         setError("")
-        const data = await fetchUserProfile(clerkUser.id)
-        setUserData(data)
+        const data = await fetchAccount(clerkUser.id, "real")
+        if (isActive) {
+          setUserData(data)
+        }
       } catch (err) {
         console.error(err)
-        setError("Unable to load your profile data.")
+        if (isActive) {
+          setError("Unable to load your profile data.")
+        }
       } finally {
-        setLoading(false)
+        if (isActive) {
+          setLoading(false)
+        }
       }
     }
 
     fetchUser()
-  }, [clerkUser])
+
+    const handleBalanceRefresh = () => {
+      fetchUser()
+    }
+
+    window.addEventListener("wallet-balance-updated", handleBalanceRefresh)
+
+    return () => {
+      isActive = false
+      window.removeEventListener("wallet-balance-updated", handleBalanceRefresh)
+    }
+  }, [clerkUser?.id, isSignedIn])
 
   if (!user) {
     return null

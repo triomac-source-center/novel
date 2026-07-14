@@ -3,10 +3,10 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, TrendingUp, History, User, Wallet, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, TrendingUp, History, User, Wallet, LogOut, Menu, X, Sparkles } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -20,6 +20,21 @@ export function Sidebar({wallet}) {
   const pathname = usePathname()
   const { logout, user } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [sidebarBalance, setSidebarBalance] = useState(wallet?.balance ?? user?.balance ?? 0)
+
+  useEffect(() => {
+    setSidebarBalance(wallet?.balance ?? user?.balance ?? 0)
+  }, [wallet, user?.balance])
+
+  useEffect(() => {
+    const handleBalanceUpdate = (event) => {
+      const nextBalance = event?.detail?.balance ?? wallet?.balance ?? user?.balance ?? 0
+      setSidebarBalance(nextBalance)
+    }
+
+    window.addEventListener("wallet-balance-updated", handleBalanceUpdate)
+    return () => window.removeEventListener("wallet-balance-updated", handleBalanceUpdate)
+  }, [wallet?.balance, user?.balance])
 
   const handleLogout = () => {
     logout()
@@ -48,15 +63,18 @@ export function Sidebar({wallet}) {
         <div className="flex h-full flex-col">
           <div className="border-b border-border/50 px-6 py-4 bg-primary/5">
             <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Total Balance</p>
-              <p className="text-2xl font-bold text-primary">${wallet?.balance.toLocaleString()}</p>
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <p className="text-xs text-muted-foreground">Total Balance</p>
+              </div>
+              <p className="text-2xl font-bold text-primary">${sidebarBalance.toLocaleString()}</p>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Available</span>
-                <span className="font-medium text-white">${((user?.balance || 0) * 0.7).toLocaleString()}</span>
+                <span className="font-medium text-white">${(sidebarBalance * 0.7).toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">In Positions</span>
-                <span className="font-medium text-white">${((user?.balance || 0) * 0.3).toLocaleString()}</span>
+                <span className="font-medium text-white">${(sidebarBalance * 0.3).toLocaleString()}</span>
               </div>
             </div>
           </div>
