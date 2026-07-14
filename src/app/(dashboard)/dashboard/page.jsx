@@ -199,29 +199,44 @@ export default function DashboardPage() {
       }))
     : fallbackClusters
 
-  const recentActivity = [
-    { title: "Demo balance updated", time: "2 min ago", type: "info" },
-    { title: "Real account funded", time: "12 min ago", type: "success" },
-    { title: "Cluster invested", time: "1 hour ago", type: "info" },
-  ]
+  const transactions = Array.isArray(userData?.account?.transactions)
+    ? userData.account.transactions
+    : Array.isArray(userData?.wallet?.transactions)
+      ? userData.wallet.transactions
+      : []
 
-  const sparklineValues = [36, 46, 43, 54, 58, 62, 71]
-  const buildSparklinePath = (values, width = 220, height = 80) => {
-    if (!values?.length) return ""
-    const max = Math.max(...values)
-    const min = Math.min(...values)
-    const range = max - min || 1
+  const recentTransactions = [...transactions]
+    .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
+    .slice(0, 4)
 
-    return values
-      .map((value, index) => {
-        const x = (index / (values.length - 1)) * width
-        const y = height - ((value - min) / range) * height
-        return `${index === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`
-      })
-      .join(" ")
+  const trendPoints = recentTransactions.length > 0
+    ? recentTransactions
+        .slice()
+        .reverse()
+        .map((tx, index) => ({ index, value: Number(tx.balanceAfter || totalBalance || 0) }))
+    : [{ index: 0, value: totalBalance }, { index: 1, value: totalBalance + 1200 }]
+
+  const chartMax = Math.max(...trendPoints.map((point) => point.value), totalBalance || 1)
+  const chartMin = Math.min(...trendPoints.map((point) => point.value), 0)
+  const chartHeight = 80
+  const chartWidth = 220
+  const chartRange = chartMax - chartMin || 1
+  const trendPath = trendPoints
+    .map((point, index) => {
+      const x = trendPoints.length > 1 ? (index / (trendPoints.length - 1)) * chartWidth : chartWidth / 2
+      const y = chartHeight - ((point.value - chartMin) / chartRange) * chartHeight
+      return `${index === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`
+    })
+    .join(" ")
+
+  const formatDate = (value) => {
+    if (!value) return "—"
+    try {
+      return new Date(value).toLocaleString()
+    } catch {
+      return value
+    }
   }
-
-  const sparklinePath = buildSparklinePath(sparklineValues)
 
   return (
     <div className="p-6 lg:p-8 bgmain">
@@ -240,8 +255,8 @@ export default function DashboardPage() {
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Balance trend</p>
               <p className="text-lg font-semibold text-white">+$3.2k this week</p>
             </div>
-            <svg viewBox="0 0 220 80" className="h-16 w-40">
-              <path d={sparklinePath} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
+            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-16 w-40">
+              <path d={trendPath} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
             </svg>
           </div>
         </div>
@@ -313,17 +328,26 @@ export default function DashboardPage() {
             <CardDescription>Latest updates around your accounts</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentActivity.map((item) => (
-              <div key={item.title} className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-3">
-                <div>
-                  <p className="font-medium text-foreground">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">{item.time}</p>
+            {recentTransactions.length > 0 ? (
+              recentTransactions.map((tx, index) => (
+                <div key={`${tx.description || tx.type || "transaction"}-${index}`} className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-3">
+                  <div>
+                    <p className="font-medium text-foreground">{tx.description || tx.type || "Transaction"}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt || tx.date)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-primary"}`}>
+                      {tx.type === "debit" ? "-" : "+"}${Number(tx.amount || 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Balance {Number(tx.balanceAfter || 0).toLocaleString()}</p>
+                  </div>
                 </div>
-                <Badge variant={item.type === "success" ? "default" : "outline"} className="text-xs">
-                  {item.type === "success" ? "Success" : "Info"}
-                </Badge>
+              ))
+            ) : (
+              <div className="rounded-lg border border-dashed border-border/60 px-4 py-6 text-center text-sm text-muted-foreground">
+                No transactions yet for this account.
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
       </div>
@@ -369,13 +393,13 @@ export default function DashboardPage() {
             <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/10 to-background p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Weekly momentum</p>
-                  <p className="text-xl font-semibold text-white">+12.5%</p>
+                  <p className="text-sm text-muted-foreground">Latest balance trend</p>
+                  <p className="text-xl font-semibold text-white">${totalBalance.toLocaleString()}</p>
                 </div>
-                <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-400">Positive</div>
+                <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-400">Live</div>
               </div>
-              <svg viewBox="0 0 220 80" className="h-20 w-full">
-                <path d={sparklinePath} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
+              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-20 w-full">
+                <path d={trendPath} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
               </svg>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
