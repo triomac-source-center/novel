@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ArrowUpRight, ArrowDownRight, Wallet, Sparkles, TrendingUp, ShieldCheck, Clock3, RotateCcw, BadgeDollarSign } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
-import { fetchUserProfile, postDeposit, fetchAccount, postFundAccount, postSetDemoBalance } from "@/lib/api-client"
+import { fetchUserProfile, postDeposit, fetchAccount, postFundAccount, postSetDemoBalance, postWithdraw } from "@/lib/api-client"
 
 export default function WalletPage() {
   const { user: clerkUser, isSignedIn } = useUser()
@@ -181,7 +181,7 @@ export default function WalletPage() {
     }
   }
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     const amount = Number.parseFloat(withdrawAmount)
     if (!amount || amount <= 0) {
       setError("Please enter a valid amount")
@@ -193,22 +193,48 @@ export default function WalletPage() {
       return
     }
 
-    const updatedBalance = balance - amount
-    updateUser({ balance: updatedBalance })
-    setUserData((prev) =>
-      prev
-        ? {
-            ...prev,
-            wallet: {
-              ...prev.wallet,
-              balance: updatedBalance,
-            },
-          }
-        : prev
-    )
-    setWithdrawAmount("")
-    setFeedback(`Withdrawal successful: $${amount.toFixed(2)}`)
+    if (accountType === "demo") {
+      setError("Withdrawals are only available on the real account.")
+      return
+    }
+
+    if (!clerkUser?.id) {
+      setError("You must be logged in to withdraw funds.")
+      return
+    }
+
+    setLoading(true)
     setError("")
+
+    try {
+      const result = await postWithdraw({
+        clerkId: clerkUser.id,
+        amount,
+        description: "Wallet withdrawal",
+      })
+
+      const updatedBalance = result?.wallet?.balance ?? balance - amount
+
+      updateUser({ balance: updatedBalance })
+      setUserData((prev) =>
+        prev
+          ? {
+              ...prev,
+              wallet: {
+                ...prev.wallet,
+                balance: updatedBalance,
+                transactions: result?.wallet?.transactions || prev.wallet?.transactions,
+              },
+            }
+          : prev
+      )
+      setWithdrawAmount("")
+      setFeedback(`Withdrawal successful: $${amount.toFixed(2)}`)
+    } catch (err) {
+      setError(err.message || "Withdrawal failed")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSetDemoBalance = async () => {
@@ -403,11 +429,22 @@ export default function WalletPage() {
                   variant="destructive"
                   className="h-9"
                   onClick={handleWithdraw}
-                  disabled={!withdrawAmount || Number.parseFloat(withdrawAmount) <= 0 || Number.parseFloat(withdrawAmount) > balance}
+                  disabled={
+                    loading ||
+                    accountType === "demo" ||
+                    !withdrawAmount ||
+                    Number.parseFloat(withdrawAmount) <= 0 ||
+                    Number.parseFloat(withdrawAmount) > balance
+                  }
                 >
                   Withdraw
                 </Button>
               </div>
+              {accountType === "demo" && (
+                <p className="text-xs text-muted-foreground">
+                  Switch to your real account to withdraw funds.
+                </p>
+              )}
               <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
                 <span className="text-muted-foreground">Available</span>
                 <span className="font-semibold text-foreground">${balance.toLocaleString()}</span>

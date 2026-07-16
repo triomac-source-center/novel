@@ -9,6 +9,7 @@ import { Search, TrendingUp, TrendingDown, Wallet, CircleDollarSign, Sparkles } 
 import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
+import { fetchClusters as fetchClustersApi, investInCluster } from "@/lib/api-client"
 
 const demoClusters = [
   {
@@ -75,8 +76,10 @@ export default function MarketPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedClusterId, setSelectedClusterId] = useState(demoClusters[0].id)
-  const [fundAmount, setFundAmount] = useState("100")
+  const [fundCells, setFundCells] = useState("1")
   const [feedback, setFeedback] = useState("")
+  const [investing, setInvesting] = useState(false)
+  const [investError, setInvestError] = useState("")
 
   useEffect(() => {
     if (!clerkUser?.id || !isSignedIn) {
@@ -88,8 +91,7 @@ export default function MarketPage() {
 
     async function fetchClusters() {
       try {
-        const res = await fetch("https://novel-server-cdcp.onrender.com/api/all/clusters")
-        const data = await res.json()
+        const data = await fetchClustersApi()
 
         const remoteClusters = Array.isArray(data?.data)
           ? data.data.map((cluster, index) => normalizeCluster(cluster, index))
@@ -144,29 +146,62 @@ export default function MarketPage() {
   const openClusters = clusters.filter((cluster) => !cluster.metrics?.isClosed).length
   const closedClusters = clusters.length - openClusters
 
-  const handleFundCell = () => {
-    const amount = Number(fundAmount)
+  const handleFundCell = async () => {
+    const cells = Number(fundCells)
 
-    if (!selectedCluster || Number.isNaN(amount) || amount <= 0) {
-      setFeedback("Enter a valid amount to fund a cell.")
+    if (!selectedCluster || !Number.isInteger(cells) || cells <= 0) {
+      setInvestError("Enter a valid number of cells.")
       return
     }
 
-    setFeedback(`Funding request ready for ${selectedCluster.name}: ${formatCurrency(amount)}`)
-    setFundAmount("")
+    if (cells > selectedCluster.metrics.remainingCells) {
+      setInvestError(`Only ${selectedCluster.metrics.remainingCells} cell(s) remaining.`)
+      return
+    }
+
+    if (!clerkUser?.id) {
+      setInvestError("You must be logged in to invest.")
+      return
+    }
+
+    setInvesting(true)
+    setInvestError("")
+    setFeedback("")
+
+    try {
+      const result = await investInCluster(selectedCluster.id, {
+        clerkId: clerkUser.id,
+        cells,
+      })
+
+      const updatedCluster = normalizeCluster(result?.data || {}, 0)
+      setClusters((prev) =>
+        prev.map((cluster) => (cluster.id === selectedCluster.id ? { ...updatedCluster, id: selectedCluster.id } : cluster))
+      )
+      setFeedback(`Invested ${formatCurrency(cells * selectedCluster.cellValue)} in ${selectedCluster.name}.`)
+      setFundCells("1")
+      window.dispatchEvent(new CustomEvent("wallet-balance-updated", { detail: { balance: result?.wallet?.balance } }))
+    } catch (err) {
+      setInvestError(err.message || "Investment failed")
+    } finally {
+      setInvesting(false)
+    }
   }
 
   return (
     <div className="p-6 lg:p-8 bgmain">
-      <div className="mb-6 flex flex-col gap-2">
-        <div className="flex items-center gap-2 text-sm text-primary">
-          <Sparkles className="h-4 w-4" />
-          <span>triomac60 cluster investment</span>
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-sm text-primary">
+            <Sparkles className="h-4 w-4" />
+            <span>triomac60 cluster investment</span>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Cluster Market</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Each cluster is made of cells. Investors fund one or more cells until the full cluster is filled, then it closes.
+          </p>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Cluster Market</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          Each cluster is made of cells. Investors fund one or more cells until the full cluster is filled, then it closes.
-        </p>
+        <Button onClick={() => router.push("/market/create")}>Create a cluster</Button>
       </div>
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
@@ -339,24 +374,32 @@ export default function MarketPage() {
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle>Fund a cell</CardTitle>
-              <p className="text-sm text-muted-foreground">Choose an amount to support this cluster.</p>
+              <p className="text-sm text-muted-foreground">
+                {formatCurrency(selectedCluster.cellValue)} per cell &middot; {selectedCluster.metrics.remainingCells} remaining
+              </p>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={fundAmount}
-                  onChange={(e) => setFundAmount(e.target.value)}
-                  className="pl-7"
-                  placeholder="Amount"
-                />
-              </div>
-              <Button className="w-full" onClick={handleFundCell}>
-                Fund this cluster
+              <Input
+                type="number"
+                min="1"
+                step="1"
+                max={selectedCluster.metrics.remainingCells}
+                value={fundCells}
+                onChange={(e) => setFundCells(e.target.value)}
+                placeholder="Number of cells"
+                disabled={selectedCluster.metrics.isClosed}
+              />
+              <p className="text-xs text-muted-foreground">
+                Total: {formatCurrency((Number(fundCells) || 0) * selectedCluster.cellValue)}
+              </p>
+              <Button
+                className="w-full"
+                onClick={handleFundCell}
+                disabled={investing || selectedCluster.metrics.isClosed}
+              >
+                {selectedCluster.metrics.isClosed ? "Cluster closed" : investing ? "Investing..." : "Fund this cluster"}
               </Button>
+              {investError && <p className="text-sm text-destructive">{investError}</p>}
               {feedback && <p className="text-sm text-primary">{feedback}</p>}
             </CardContent>
           </Card>

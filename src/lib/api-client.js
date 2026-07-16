@@ -71,6 +71,50 @@ export async function postDeposit(payload) {
   })
 }
 
+function postJson(url, payload) {
+  return requestJson(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function fetchClusters() {
   return requestJson(`${API_BASE_URL}/api/all/clusters`)
+}
+
+export async function fetchClusterById(clusterId) {
+  if (!clusterId) throw new Error("Missing cluster id")
+  return requestJson(`${API_BASE_URL}/api/all/clusters/${encodeURIComponent(clusterId)}`)
+}
+
+export async function createCluster(payload) {
+  return postJson(`${API_BASE_URL}/api/clusters`, payload)
+}
+
+export async function investInCluster(clusterId, payload) {
+  if (!clusterId) throw new Error("Missing cluster id")
+  return postJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/invest`, payload)
+}
+
+export async function postWithdraw(payload) {
+  return postJson(`${API_BASE_URL}/api/withdraw`, payload)
+}
+
+export async function fetchNotifications(clerkId, limit = 30) {
+  if (!clerkId) throw new Error("Missing clerk id")
+  return requestJson(
+    `${API_BASE_URL}/api/notifications?clerkId=${encodeURIComponent(clerkId)}&limit=${limit}`
+  )
+}
+
+export async function markNotificationRead(notificationId) {
+  if (!notificationId) throw new Error("Missing notification id")
+  return postJson(`${API_BASE_URL}/api/notifications/${encodeURIComponent(notificationId)}/read`, {})
+}
+
+export async function markAllNotificationsRead(clerkId) {
+  return postJson(`${API_BASE_URL}/api/notifications/read-all`, { clerkId })
 }
