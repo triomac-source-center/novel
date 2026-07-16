@@ -15,7 +15,10 @@ function normalize(cluster) {
   const cellValue = Number(cluster.entryPoint ?? cluster.cellValue ?? 1000)
   const filledCells = Number(cluster.holderPoint ?? cluster.filledCells ?? 0)
 
-  const metrics = calculateClusterMetrics({ cellCount, cellValue, filledCells })
+  const currentLayer = Number(cluster.currentLayer ?? cluster.layer ?? 1)
+  const maxLayers = Number(cluster.maxLayers ?? cluster.layers ?? 1)
+  const layerStep = Number(cluster.layerStep ?? cluster.layerIncrement ?? 0)
+  const metrics = calculateClusterMetrics({ cellCount, cellValue, filledCells, currentLayer, maxLayers, layerStep })
 
   return {
     ...cluster,
@@ -103,7 +106,7 @@ export default function ClusterPage() {
 
       setCluster(normalize(result.data))
       setCells("1")
-      setFeedback(`Invested ${formatCurrency(parsedCells * cluster.cellValue)}.`)
+      setFeedback(`Invested ${formatCurrency(parsedCells * metrics.currentCellPrice)} in layer ${metrics.currentLayer}.`)
       window.dispatchEvent(new CustomEvent("wallet-balance-updated", { detail: { balance: result?.wallet?.balance } }))
     } catch (err) {
       setError(err.message || "Investment failed")
@@ -192,6 +195,14 @@ export default function ClusterPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Active layer</span>
+                  <span className="font-semibold text-primary">{metrics.currentLayer} / {metrics.maxLayers}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Entry per cell</span>
+                  <span className="font-semibold text-primary">{formatCurrency(metrics.currentCellPrice)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Gross liquidity</span>
                   <span className="font-semibold">{formatCurrency(metrics.brutLiquidity)}</span>
                 </div>
@@ -220,7 +231,7 @@ export default function ClusterPage() {
                     placeholder="Number of cells"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Total: {formatCurrency((Number(cells) || 0) * cluster.cellValue)}
+                    Total: {formatCurrency((Number(cells) || 0) * metrics.currentCellPrice)}
                   </p>
                   <Button className="w-full" onClick={handleInvest} disabled={investing || metrics.isClosed}>
                     {metrics.isClosed ? "Cluster closed" : investing ? "Investing..." : "Fund this cluster"}

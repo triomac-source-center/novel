@@ -1,30 +1,27 @@
-function calculateClusterMetrics({ cellCount, cellValue, filledCells = 0 }) {
-  const brutLiquidity = cellCount * cellValue
-  const systemShare = brutLiquidity * 0.16
-  const netLiquidity = brutLiquidity - systemShare
-  const remainingCells = Math.max(cellCount - filledCells, 0)
-  const filledValue = filledCells * cellValue
-  const remainingValue = remainingCells * cellValue
-  const progress = cellCount > 0 ? Math.min((filledCells / cellCount) * 100, 100) : 0
-  const isClosed = remainingCells === 0
+const SYSTEM_SHARE_RATE = 0.16
 
-  return {
-    brutLiquidity,
-    systemShare,
-    netLiquidity,
-    remainingCells,
-    filledValue,
-    remainingValue,
-    progress,
-    isClosed,
-  }
+function calculateClusterMetrics({ cellCount, cellValue, filledCells = 0, currentLayer = 1, maxLayers = 1, layerStep = 0 }) {
+  const safeCellCount = Math.max(Number(cellCount) || 0, 0)
+  const safeCellValue = Math.max(Number(cellValue) || 0, 0)
+  const safeLayer = Math.max(Number(currentLayer) || 1, 1)
+  const safeMaxLayers = Math.max(Number(maxLayers) || 1, 1)
+  const safeLayerStep = Math.max(Number(layerStep) || 0, 0)
+  const safeFilledCells = Math.min(Math.max(Number(filledCells) || 0, 0), safeCellCount)
+  const currentCellPrice = safeCellValue + (safeLayer - 1) * safeLayerStep
+  const brutLiquidity = safeCellCount * safeCellValue
+  const systemShare = brutLiquidity * SYSTEM_SHARE_RATE
+  const netLiquidity = brutLiquidity - systemShare
+  const remainingCells = Math.max(safeCellCount - safeFilledCells, 0)
+  const filledValue = safeFilledCells * currentCellPrice
+  const remainingValue = remainingCells * currentCellPrice
+  const progress = safeCellCount > 0 ? Math.min((safeFilledCells / safeCellCount) * 100, 100) : 0
+  const layerComplete = remainingCells === 0
+  const isClosed = layerComplete && safeLayer >= safeMaxLayers
+  return { brutLiquidity, systemShare, netLiquidity, currentCellPrice, remainingCells, filledValue, remainingValue, progress, layerComplete, isClosed, currentLayer: safeLayer, maxLayers: safeMaxLayers, layerStep: safeLayerStep }
 }
 
 function formatCurrency(value) {
-  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(value) || 0)
 }
 
-module.exports = {
-  calculateClusterMetrics,
-  formatCurrency,
-}
+module.exports = { SYSTEM_SHARE_RATE, calculateClusterMetrics, formatCurrency }

@@ -18,6 +18,9 @@ const demoClusters = [
     name: "Alpha Cluster",
     cellCount: 10,
     cellValue: 1000,
+    currentLayer: 1,
+    maxLayers: 4,
+    layerStep: 100,
     filledCells: 4,
     creator: "triomac60",
     description: "Early-stage growth cluster with strong momentum.",
@@ -28,6 +31,9 @@ const demoClusters = [
     name: "Beta Cluster",
     cellCount: 8,
     cellValue: 1500,
+    currentLayer: 3,
+    maxLayers: 3,
+    layerStep: 150,
     filledCells: 8,
     creator: "triomac60",
     description: "Fully subscribed and now closed for new investors.",
@@ -38,6 +44,9 @@ const demoClusters = [
     name: "Gamma Cluster",
     cellCount: 12,
     cellValue: 800,
+    currentLayer: 2,
+    maxLayers: 5,
+    layerStep: 80,
     filledCells: 7,
     creator: "triomac60",
     description: "New cluster opening with attractive room for funding.",
@@ -53,6 +62,9 @@ function normalizeCluster(cluster, index) {
     cellCount: Number(cluster.cellCount ?? cluster.totalCells ?? cluster.cells ?? cluster.expVolume ?? 10),
     cellValue: Number(cluster.cellValue ?? cluster.valuePerCell ?? cluster.entryPoint ?? cluster.recette ?? 1000),
     filledCells: Number(cluster.filledCells ?? cluster.filled ?? cluster.holderPoint ?? cluster.actualVolume ?? 0),
+    currentLayer: Number(cluster.currentLayer ?? cluster.layer ?? 1),
+    maxLayers: Number(cluster.maxLayers ?? cluster.layers ?? 1),
+    layerStep: Number(cluster.layerStep ?? cluster.layerIncrement ?? cluster.increment ?? 0),
   })
 
   return {
@@ -62,6 +74,9 @@ function normalizeCluster(cluster, index) {
     cellCount: Number(cluster.cellCount ?? cluster.totalCells ?? cluster.cells ?? cluster.expVolume ?? 10),
     cellValue: Number(cluster.cellValue ?? cluster.valuePerCell ?? cluster.entryPoint ?? cluster.recette ?? 1000),
     filledCells: Number(cluster.filledCells ?? cluster.filled ?? cluster.holderPoint ?? cluster.actualVolume ?? 0),
+    currentLayer: Number(cluster.currentLayer ?? cluster.layer ?? 1),
+    maxLayers: Number(cluster.maxLayers ?? cluster.layers ?? 1),
+    layerStep: Number(cluster.layerStep ?? cluster.layerIncrement ?? cluster.increment ?? 0),
     creator: cluster.creator ?? "triomac60",
     description: cluster.description ?? "Cluster ready for investment.",
     status: cluster.status ?? (metrics.isClosed ? "Closed" : "Open"),
@@ -72,7 +87,8 @@ function normalizeCluster(cluster, index) {
 export default function MarketPage() {
   const { user: clerkUser, isSignedIn } = useUser()
   const router = useRouter()
-  const [clusters, setClusters] = useState(demoClusters)
+  const isAdmin = clerkUser?.publicMetadata?.role === "admin" || clerkUser?.id === process.env.NEXT_PUBLIC_TRIOMAC60_ADMIN_CLERK_ID
+  const [clusters, setClusters] = useState(() => demoClusters.map(normalizeCluster))
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedClusterId, setSelectedClusterId] = useState(demoClusters[0].id)
@@ -98,12 +114,12 @@ export default function MarketPage() {
           : []
 
         if (isActive) {
-          setClusters(remoteClusters.length > 0 ? remoteClusters : demoClusters)
+          setClusters(remoteClusters.length > 0 ? remoteClusters : demoClusters.map(normalizeCluster))
         }
       } catch (err) {
         console.error(err)
         if (isActive) {
-          setClusters(demoClusters)
+          setClusters(demoClusters.map(normalizeCluster))
         }
       } finally {
         if (isActive) {
@@ -178,7 +194,7 @@ export default function MarketPage() {
       setClusters((prev) =>
         prev.map((cluster) => (cluster.id === selectedCluster.id ? { ...updatedCluster, id: selectedCluster.id } : cluster))
       )
-      setFeedback(`Invested ${formatCurrency(cells * selectedCluster.cellValue)} in ${selectedCluster.name}.`)
+      setFeedback(`Invested ${formatCurrency(cells * selectedCluster.metrics.currentCellPrice)} in ${selectedCluster.name}, layer ${selectedCluster.metrics.currentLayer}.`)
       setFundCells("1")
       window.dispatchEvent(new CustomEvent("wallet-balance-updated", { detail: { balance: result?.wallet?.balance } }))
     } catch (err) {
@@ -198,10 +214,10 @@ export default function MarketPage() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white">Cluster Market</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            Each cluster is made of cells. Investors fund one or more cells until the full cluster is filled, then it closes.
+            Buy one or more cells at the active layer price. A completed layer opens the next one; the final layer closes the cluster.
           </p>
         </div>
-        <Button onClick={() => router.push("/market/create")}>Create a cluster</Button>
+        {isAdmin && <Button onClick={() => router.push("/market/create")}>Create a cluster</Button>}
       </div>
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
@@ -304,7 +320,7 @@ export default function MarketPage() {
                     <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
                       <span>{metrics.remainingCells} cells left</span>
                       <span>{cluster.cellCount} total cells</span>
-                      <span>{formatCurrency(cluster.cellValue)} per cell</span>
+                      <span>{formatCurrency(metrics.currentCellPrice)} · layer {metrics.currentLayer}/{metrics.maxLayers}</span>
                     </div>
 
                     <div className="mt-3 flex gap-2">
@@ -341,6 +357,14 @@ export default function MarketPage() {
               <p className="text-sm text-muted-foreground">{selectedCluster?.description}</p>
 
               <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <p className="text-xs text-muted-foreground">Active layer</p>
+                  <p className="text-lg font-semibold text-primary">{selectedMetrics.currentLayer} / {selectedMetrics.maxLayers}</p>
+                </div>
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <p className="text-xs text-muted-foreground">Entry per cell</p>
+                  <p className="text-lg font-semibold text-primary">{formatCurrency(selectedMetrics.currentCellPrice)}</p>
+                </div>
                 <div className="rounded-lg bg-secondary/50 p-3">
                   <p className="text-xs text-muted-foreground">Gross liquidity</p>
                   <p className="text-lg font-semibold">{formatCurrency(selectedMetrics.brutLiquidity)}</p>
@@ -375,7 +399,7 @@ export default function MarketPage() {
             <CardHeader>
               <CardTitle>Fund a cell</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {formatCurrency(selectedCluster.cellValue)} per cell &middot; {selectedCluster.metrics.remainingCells} remaining
+                Layer {selectedMetrics.currentLayer}: {formatCurrency(selectedMetrics.currentCellPrice)} per cell · {selectedMetrics.remainingCells} remaining
               </p>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -390,7 +414,7 @@ export default function MarketPage() {
                 disabled={selectedCluster.metrics.isClosed}
               />
               <p className="text-xs text-muted-foreground">
-                Total: {formatCurrency((Number(fundCells) || 0) * selectedCluster.cellValue)}
+                Total: {formatCurrency((Number(fundCells) || 0) * selectedMetrics.currentCellPrice)}
               </p>
               <Button
                 className="w-full"

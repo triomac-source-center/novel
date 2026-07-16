@@ -1,36 +1,5 @@
 "use client"
-
-import { useAuth } from "@/lib/auth-context"
-import { TrendingUp, User } from "lucide-react"
 import Link from "next/link"
+import { Layers3, UserRound } from "lucide-react"
 import { NotificationBell } from "@/components/NotificationBell"
-
-export function Header({userdata}) {
-  const { user } = useAuth()
-
-  return (
-    <header className="fixed top-0 left-0 right-0 z-30 border-b border-border/50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-      <div className="flex h-16 items-center justify-between px-6 lg:px-8">
-        {/* Logo - Left side */}
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold text-white">Ogence</span>
-        </div>
-
-        {/* Notifications + Profile - Right side */}
-        <div className="flex items-center gap-3">
-          <NotificationBell />
-          <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium text-white">{userdata[0]}</p>
-              <p className="text-xs text-muted-foreground">{userdata[1]}</p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary border-2 border-primary/20">
-              <User className="h-5 w-5" />
-            </div>
-          </Link>
-        </div>
-      </div>
-    </header>
-  )
-}
+export function Header({ userdata }) { const name = userdata?.[0] || "Investor"; const email = userdata?.[1] || ""; return <header className="fixed inset-x-0 top-0 z-30 border-b border-border/50 bg-card/90 backdrop-blur"><div className="flex h-16 items-center justify-between px-5 lg:px-8"><Link href="/dashboard" className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Layers3 className="h-4 w-4" /></span><span className="text-lg font-bold tracking-tight text-white">triomac60</span></Link><div className="flex items-center gap-3"><NotificationBell /><Link href="/profile" className="flex items-center gap-2 rounded-xl p-1.5 hover:bg-accent"><div className="hidden text-right sm:block"><p className="text-sm font-medium text-white">{name}</p><p className="max-w-36 truncate text-xs text-muted-foreground">{email}</p></div><span className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary"><UserRound className="h-4 w-4" /></span></Link></div></div></header> }

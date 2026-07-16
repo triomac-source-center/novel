@@ -1,128 +1,19 @@
 "use client"
-
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, TrendingUp, History, User, Wallet, LogOut, Menu, X, Sparkles } from "lucide-react"
-import { useAuth } from "@/lib/auth-context"
+import { BarChart3, History, LayoutDashboard, Layers3, Menu, Wallet, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 
-const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Market", href: "/market", icon: TrendingUp },
-  { name: "History", href: "/transactions", icon: History },
-  { name: "Profile", href: "/profile", icon: User },
-  { name: "Wallet", href: "/wallet", icon: Wallet },
-]
+const navigation = [{ name: "Overview", href: "/dashboard", icon: LayoutDashboard }, { name: "Cluster market", href: "/market", icon: Layers3 }, { name: "Wallet", href: "/wallet", icon: Wallet }, { name: "Activity", href: "/transactions", icon: History }]
 
-export function Sidebar({wallet}) {
+export function Sidebar({ wallet }) {
   const pathname = usePathname()
-  const { logout, user } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [sidebarBalance, setSidebarBalance] = useState(wallet?.balance ?? user?.balance ?? 0)
-
-  useEffect(() => {
-    setSidebarBalance(wallet?.balance ?? user?.balance ?? 0)
-  }, [wallet, user?.balance])
-
-  useEffect(() => {
-    const handleBalanceUpdate = (event) => {
-      const nextBalance = event?.detail?.balance ?? wallet?.balance ?? user?.balance ?? 0
-      setSidebarBalance(nextBalance)
-    }
-
-    window.addEventListener("wallet-balance-updated", handleBalanceUpdate)
-    return () => window.removeEventListener("wallet-balance-updated", handleBalanceUpdate)
-  }, [wallet?.balance, user?.balance])
-
-  const handleLogout = () => {
-    logout()
-    window.location.href = "/login"
-  }
-
-  return (
-    <>
-      {/* Mobile menu button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      >
-        {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </Button>
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r border-border/50 bg-card transition-transform duration-300 ease-in-out lg:translate-x-0",
-          mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <div className="flex h-full flex-col">
-          <div className="border-b border-border/50 px-6 py-4 bg-primary/5">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <p className="text-xs text-muted-foreground">Total Balance</p>
-              </div>
-              <p className="text-2xl font-bold text-primary">${sidebarBalance.toLocaleString()}</p>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Available</span>
-                <span className="font-medium text-white">${(sidebarBalance * 0.7).toLocaleString()}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">In Positions</span>
-                <span className="font-medium text-white">${(sidebarBalance * 0.3).toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1 px-3 py-4">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.name}
-                </Link>
-              )
-            })}
-          </nav>
-
-          {/* Logout */}
-          <div className="border-t border-border/50 p-3">
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-5 w-5" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Overlay for mobile */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-    </>
-  )
+  const [balance, setBalance] = useState(Number(wallet?.balance || 0))
+  useEffect(() => setBalance(Number(wallet?.balance || 0)), [wallet?.balance])
+  useEffect(() => { const onUpdate = (event) => setBalance(Number(event?.detail?.balance ?? wallet?.balance ?? 0)); window.addEventListener("wallet-balance-updated", onUpdate); return () => window.removeEventListener("wallet-balance-updated", onUpdate) }, [wallet?.balance])
+  const sidebar = <aside className="flex h-full flex-col border-r border-border/50 bg-card/95 backdrop-blur"><div className="border-b border-border/50 px-5 py-6"><p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Capital available</p><p className="mt-2 text-3xl font-bold tracking-tight text-white">${balance.toLocaleString()}</p><Link href="/wallet" className="mt-4 flex items-center justify-between rounded-xl border border-primary/20 bg-primary/10 px-3 py-2 text-xs text-primary hover:bg-primary/15">Manage funds <Wallet className="h-3.5 w-3.5" /></Link></div><nav className="flex-1 space-y-1 px-3 py-5"><p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Workspace</p>{navigation.map((item) => { const active = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(`${item.href}/`)); return <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition", active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-accent hover:text-foreground")}><item.icon className="h-4 w-4" />{item.name}</Link> })}</nav><div className="m-3 rounded-xl border border-border/50 bg-background/50 p-3"><div className="flex gap-2"><BarChart3 className="mt-0.5 h-4 w-4 text-primary" /><div><p className="text-xs font-medium text-white">Layered investing</p><p className="mt-1 text-[11px] leading-4 text-muted-foreground">Every completed layer opens the next entry price.</p></div></div></div></aside>
+  return <><Button variant="ghost" size="icon" className="fixed left-3 top-3 z-50 lg:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>{mobileMenuOpen ? <X /> : <Menu />}</Button><div className="fixed inset-y-0 left-0 z-40 hidden w-64 pt-16 lg:block">{sidebar}</div>{mobileMenuOpen && <><div className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={() => setMobileMenuOpen(false)} /><div className="fixed inset-y-0 left-0 z-40 w-72 pt-16 lg:hidden">{sidebar}</div></>}</>
 }

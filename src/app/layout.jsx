@@ -7,8 +7,8 @@ import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignOutButton, UserBu
 
 export const metadata = {
   title: {
-    template: '%s - TaxPal',
-    default: 'TaxPal - Accounting made simple for small businesses',
+    template: '%s | triomac60',
+    default: 'triomac60 | Layered cluster investing',
   },
   description:
     'Most bookkeeping software is accurate, but hard to use. We make the opposite trade-off, and hope you don’t get audited.',
@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
     <html
-      lang="en"
+      lang="fr"
       className={clsx(
         'h-full scroll-smooth bg-white antialiased',
         inter.variable,

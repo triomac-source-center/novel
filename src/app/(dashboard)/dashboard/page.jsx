@@ -24,6 +24,9 @@ function normalizeCluster(cluster, index) {
     cellCount: Number(cluster.cellCount ?? cluster.totalCells ?? cluster.cells ?? cluster.expVolume ?? 10),
     cellValue: Number(cluster.cellValue ?? cluster.valuePerCell ?? cluster.entryPoint ?? cluster.recette ?? 1000),
     filledCells: Number(cluster.filledCells ?? cluster.filled ?? cluster.holderPoint ?? cluster.actualVolume ?? 0),
+    currentLayer: Number(cluster.currentLayer ?? cluster.layer ?? 1),
+    maxLayers: Number(cluster.maxLayers ?? cluster.layers ?? 1),
+    layerStep: Number(cluster.layerStep ?? cluster.layerIncrement ?? 0),
   })
 
   return {
@@ -34,6 +37,9 @@ function normalizeCluster(cluster, index) {
     cellCount: Number(cluster.cellCount ?? cluster.totalCells ?? cluster.cells ?? cluster.expVolume ?? 10),
     cellValue: Number(cluster.cellValue ?? cluster.valuePerCell ?? cluster.entryPoint ?? cluster.recette ?? 1000),
     filledCells: Number(cluster.filledCells ?? cluster.filled ?? cluster.holderPoint ?? cluster.actualVolume ?? 0),
+    currentLayer: Number(cluster.currentLayer ?? cluster.layer ?? 1),
+    maxLayers: Number(cluster.maxLayers ?? cluster.layers ?? 1),
+    layerStep: Number(cluster.layerStep ?? cluster.layerIncrement ?? 0),
     creator: cluster.creator ?? "triomac60",
     description: cluster.description ?? "Cluster ready for investment.",
     metrics,
@@ -197,6 +203,8 @@ export default function DashboardPage() {
         target: cluster.metrics?.brutLiquidity ?? 0,
         status: cluster.status,
         symbol: cluster.symbol,
+        layer: cluster.metrics?.currentLayer ?? 1,
+        maxLayers: cluster.metrics?.maxLayers ?? 1,
       }))
     : fallbackClusters
 

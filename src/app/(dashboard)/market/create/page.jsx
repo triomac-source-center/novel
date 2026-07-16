@@ -23,13 +23,19 @@ export default function CreateClusterPage() {
   const [algorythm, setAlgorythm] = useState(ALGORITHMS[0])
   const [cellCount, setCellCount] = useState("10")
   const [cellValue, setCellValue] = useState("1000")
+  const [maxLayers, setMaxLayers] = useState("3")
+  const [layerStep, setLayerStep] = useState("100")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
   if (!isSignedIn) return <p className="p-8">Please log in</p>
+  const isAdmin = clerkUser?.publicMetadata?.role === "admin" || clerkUser?.id === process.env.NEXT_PUBLIC_TRIOMAC60_ADMIN_CLERK_ID
+  if (!isAdmin) return <div className="p-6 lg:p-8 bgmain"><h1 className="text-2xl font-bold text-white">Admin access required</h1><p className="mt-2 text-sm text-muted-foreground">Only the triomac60 system administrator can create clusters.</p></div>
 
   const parsedCellCount = Number(cellCount)
   const parsedCellValue = Number(cellValue)
+  const parsedMaxLayers = Number(maxLayers)
+  const parsedLayerStep = Number(layerStep)
   const totalTarget = (Number.isFinite(parsedCellCount) ? parsedCellCount : 0) * (Number.isFinite(parsedCellValue) ? parsedCellValue : 0)
 
   const handleSubmit = async (e) => {
@@ -48,6 +54,10 @@ export default function CreateClusterPage() {
       setError("Cell value must be a positive amount.")
       return
     }
+    if (!Number.isInteger(parsedMaxLayers) || parsedMaxLayers <= 0 || !Number.isFinite(parsedLayerStep) || parsedLayerStep < 0) {
+      setError("Layers and layer increment must be valid.")
+      return
+    }
 
     setSubmitting(true)
     try {
@@ -59,6 +69,9 @@ export default function CreateClusterPage() {
         algorythm,
         cellCount: parsedCellCount,
         cellValue: parsedCellValue,
+        maxLayers: parsedMaxLayers,
+        layerStep: parsedLayerStep,
+        creator: "triomac60",
       })
 
       const newId = result?.data?._id || result?.data?.id
@@ -113,6 +126,11 @@ export default function CreateClusterPage() {
                   placeholder="e.g. Momentum Cluster"
                 />
               </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5"><Label htmlFor="maxLayers">Maximum layers</Label><Input id="maxLayers" type="number" min="1" step="1" value={maxLayers} onChange={(e) => setMaxLayers(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label htmlFor="layerStep">Layer increment ($)</Label><Input id="layerStep" type="number" min="0" step="1" value={layerStep} onChange={(e) => setLayerStep(e.target.value)} /></div>
             </div>
 
             <div className="space-y-1.5">
@@ -171,6 +189,7 @@ export default function CreateClusterPage() {
             <div className="rounded-lg bg-secondary/50 p-3 text-sm">
               <span className="text-muted-foreground">Target liquidity: </span>
               <span className="font-semibold">{formatCurrency(totalTarget || 0)}</span>
+              <p className="mt-1 text-xs text-muted-foreground">Layer 1 starts at {formatCurrency(parsedCellValue || 0)}; each completed layer adds {formatCurrency(parsedLayerStep || 0)}.</p>
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}
