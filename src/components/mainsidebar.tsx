@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { BarChart3, History, LayoutDashboard, Layers3, Menu, Wallet, X } from "lucide-react"
+import { History, LayoutDashboard, Layers3, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 
@@ -11,12 +11,19 @@ const navigation = [
   { name: "Cluster market", href: "/market", icon: Layers3 },
   { name: "Wallet", href: "/wallet", icon: Wallet },
   { name: "Activity", href: "/transactions", icon: History },
+  { name: "Profile", href: "/profile", icon: UserRound },
 ]
+
+function hasAdminCookie() {
+  if (typeof document === "undefined") return false
+  return document.cookie.split("; ").some((entry) => entry.startsWith("triomac60_admin_ui=1"))
+}
 
 export function Sidebar({ wallet }) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [balance, setBalance] = useState(Number(wallet?.balance || 0))
+  const [showAdminLink, setShowAdminLink] = useState(false)
 
   useEffect(() => setBalance(Number(wallet?.balance || 0)), [wallet?.balance])
   useEffect(() => {
@@ -24,6 +31,7 @@ export function Sidebar({ wallet }) {
     window.addEventListener("wallet-balance-updated", onUpdate)
     return () => window.removeEventListener("wallet-balance-updated", onUpdate)
   }, [wallet?.balance])
+  useEffect(() => setShowAdminLink(hasAdminCookie()), [pathname])
 
   const sidebar = (
     <aside className="flex h-full flex-col border-r border-border bg-card">
@@ -58,16 +66,26 @@ export function Sidebar({ wallet }) {
             </Link>
           )
         })}
+
+        {showAdminLink && (
+          <>
+            <p className="px-3 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Admin</p>
+            <Link
+              href="/admin"
+              onClick={() => setMobileMenuOpen(false)}
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                pathname?.startsWith("/admin")
+                  ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Cluster admin
+            </Link>
+          </>
+        )}
       </nav>
-      <div className="m-3 rounded-xl border border-border bg-muted/50 p-3">
-        <div className="flex gap-2">
-          <BarChart3 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <div>
-            <p className="text-xs font-medium text-foreground">Layered investing</p>
-            <p className="mt-1 text-[11px] leading-4 text-muted-foreground">Every completed layer opens the next entry price.</p>
-          </div>
-        </div>
-      </div>
     </aside>
   )
 

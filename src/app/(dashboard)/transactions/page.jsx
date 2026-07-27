@@ -1,107 +1,164 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import { useUser } from "@clerk/nextjs"
+import { PageHeader } from "@/components/page-header"
+import { EmptyState } from "@/components/empty-state"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { ArrowDownRight, ArrowUpRight, History, Search } from "lucide-react"
+import { fetchUserProfile } from "@/lib/api-client"
 
+const FILTERS = [
+  { value: "all", label: "All" },
+  { value: "credit", label: "Credits" },
+  { value: "debit", label: "Debits" },
+]
 
-export default function HistoryPage() {
-
-  const { user: clerkUser, isSignedIn } = useUser();
-  const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+export default function TransactionsPage() {
+  const { user: clerkUser, isSignedIn } = useUser()
+  const [transactions, setTransactions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState("all")
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const pageSize = 8
 
   useEffect(() => {
-    if (!clerkUser) return;
+    if (!clerkUser?.id) return
+    let isActive = true
 
     async function fetchUser() {
       try {
-        const res = await fetch(`https://novel-server-cdcp.onrender.com/api/${clerkUser.id}`);
-        const data = await res.json();
-        setUserData(data);
+        const data = await fetchUserProfile(clerkUser.id)
+        if (isActive) setTransactions(Array.isArray(data?.wallet?.transactions) ? data.wallet.transactions : [])
       } catch (err) {
-        console.error(err);
+        console.error(err)
+        if (isActive) setTransactions([])
       } finally {
-        setLoading(false);
+        if (isActive) setLoading(false)
       }
     }
 
-    fetchUser();
-  }, [clerkUser]);
+    fetchUser()
+    return () => {
+      isActive = false
+    }
+  }, [clerkUser?.id])
 
-  if (!clerkUser) {
-    return null
-  }
+  const filtered = useMemo(() => {
+    return transactions
+      .filter((tx) => (filter === "all" ? true : (tx.type === "credit" ? "credit" : "debit") === filter))
+      .filter((tx) => (tx.description || tx.type || "").toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  }, [transactions, filter, search])
 
-  if (!isSignedIn) return <p>Please log in</p>;
-  if (loading) return <p>Loading...</p>;
-  if (!userData) return <p>User not found</p>;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const visible = filtered.slice((page - 1) * pageSize, page * pageSize)
+
+  if (!clerkUser) return null
+  if (!isSignedIn) return <p>Please log in</p>
 
   return (
-    <div className="p-6 lg:p-8 bgmain">
-      <div className="mb-6">
-        <p className="text-sm font-medium text-primary">Activity</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">Transactions</h1>
-      </div>
-      <Card className="border-border shadow-sm">
-        <CardHeader>
-          <CardTitle>All Transactions</CardTitle>
-          <CardDescription>Complete history of your trading activity</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {userData.wallet.transactions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-lg font-medium text-muted-foreground">No transactions yet</p>
-              <p className="text-sm text-muted-foreground">Start deposit to see your history here</p>
+    <div className="bgmain p-6 lg:p-8">
+      <PageHeader eyebrow="Account history" icon={History} title="Transactions" description="Complete history of your deposits, withdrawals and cluster activity." />
+
+      {loading ? (
+        <div className="h-64 animate-pulse rounded-2xl border border-border bg-muted/30" />
+      ) : transactions.length === 0 ? (
+        <EmptyState icon={History} title="No transactions yet" description="Deposit funds to start seeing your history here." />
+      ) : (
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Tabs
+              value={filter}
+              onValueChange={(value) => {
+                setFilter(value)
+                setPage(1)
+              }}
+            >
+              <TabsList>
+                {FILTERS.map((f) => (
+                  <TabsTrigger key={f.value} value={f.value}>
+                    {f.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <div className="relative sm:w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search transactions"
+                className="pl-10"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+              />
             </div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <EmptyState icon={Search} title="No matching transactions" description="Try a different filter or search term." />
           ) : (
-            <div className="space-y-4">
-              {userData.wallet.transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((trade) => (
-                <div
-                  key={`${trade.createdAt}-${trade.type}`}
-                  className="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-4 transition-colors hover:bg-accent"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                        trade.type === "credit" ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
-                      }`}
-                    >
-                      {trade.type === "credit" ? (
-                        <ArrowUpRight className="h-5 w-5" />
-                      ) : (
-                        <ArrowDownRight className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-xs">{trade.type}</p>
-                        <Badge variant={trade.type === "credit" ? "default" : "destructive"} className="capitalize text-sm">
-                          deposit
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        deposit  ${trade.amount}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">${trade.amount}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(trade.createdAt).toLocaleString("en-US", {dateStyle: "medium",timeStyle: "short",})} {new Date(trade.createdAt).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="rounded-xl border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Balance after</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visible.map((tx, index) => {
+                      const isCredit = tx.type === "credit"
+                      return (
+                        <TableRow key={`${tx.createdAt}-${index}`}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${isCredit ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-destructive/10 text-destructive"}`}>
+                                {isCredit ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                              </div>
+                              <Badge variant={isCredit ? "default" : "destructive"} className="text-xs capitalize">
+                                {tx.type}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">{tx.description || "Transaction"}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(tx.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+                          </TableCell>
+                          <TableCell className={`text-right font-semibold ${isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                            {isCredit ? "+" : "-"}${Number(tx.amount || 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">${Number(tx.balanceAfter || 0).toLocaleString()}</TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <Button variant="outline" size="sm" onClick={() => setPage((prev) => Math.max(1, prev - 1))} disabled={page === 1}>
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
+                <Button variant="outline" size="sm" onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} disabled={page === totalPages}>
+                  Next
+                </Button>
+              </div>
+            </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   )
 }

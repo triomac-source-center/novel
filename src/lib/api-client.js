@@ -99,6 +99,26 @@ export async function investInCluster(clusterId, payload) {
   return postJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/invest`, payload)
 }
 
+function patchJson(url, payload) {
+  return requestJson(url, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function publishCluster(clusterId, payload) {
+  if (!clusterId) throw new Error("Missing cluster id")
+  return patchJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/publish`, payload)
+}
+
+export async function closeCluster(clusterId, payload) {
+  if (!clusterId) throw new Error("Missing cluster id")
+  return patchJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/close`, payload)
+}
+
 export async function postWithdraw(payload) {
   return postJson(`${API_BASE_URL}/api/withdraw`, payload)
 }
