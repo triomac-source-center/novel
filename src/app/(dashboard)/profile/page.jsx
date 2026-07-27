@@ -30,7 +30,7 @@ export default function ProfilePage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl font-semibold text-foreground">{name}</h2>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                   <BadgeCheck className="h-3.5 w-3.5" /> Verified
                 </span>
               </div>
@@ -57,7 +57,7 @@ export default function ProfilePage() {
           <CardContent>
             <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
               <span className="text-sm text-foreground">Identity status</span>
-              <span className="text-sm font-medium text-emerald-600">Protected</span>
+              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Protected</span>
             </div>
           </CardContent>
         </Card>

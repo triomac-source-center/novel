@@ -173,7 +173,7 @@ export default function DashboardPage() {
       value: `$${demoBalance.toLocaleString()}`,
       subtitle: "Practice balance",
       icon: CircleDollarSign,
-      accent: "text-amber-600",
+      accent: "text-amber-600 dark:text-amber-400",
       badge: "Demo",
     },
     {
@@ -181,7 +181,7 @@ export default function DashboardPage() {
       value: `$${availableFunds.toLocaleString()}`,
       subtitle: "Ready to deploy",
       icon: Wallet,
-      accent: "text-emerald-600",
+      accent: "text-emerald-600 dark:text-emerald-400",
       badge: "Liquid",
     },
     {
@@ -189,7 +189,7 @@ export default function DashboardPage() {
       value: `$${invested.toLocaleString()}`,
       subtitle: "In clusters",
       icon: Layers3,
-      accent: "text-blue-600",
+      accent: "text-blue-600 dark:text-blue-400",
       badge: "Active",
     },
   ]
@@ -262,7 +262,7 @@ export default function DashboardPage() {
           <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-muted/40 p-3">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Balance trend</p>
-              <p className="text-lg font-semibold text-emerald-600">+$3.2k this week</p>
+              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">+$3.2k this week</p>
             </div>
             <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-16 w-40">
               <path d={trendPath} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary" />
@@ -345,7 +345,7 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt || tx.date)}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-emerald-600"}`}>
+                    <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
                       {tx.type === "debit" ? "-" : "+"}${Number(tx.amount || 0).toLocaleString()}
                     </p>
                     <p className="text-xs text-muted-foreground">Balance {Number(tx.balanceAfter || 0).toLocaleString()}</p>
@@ -405,7 +405,7 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground">Latest balance trend</p>
                   <p className="text-xl font-semibold text-foreground">${totalBalance.toLocaleString()}</p>
                 </div>
-                <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600">Live</div>
+                <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">Live</div>
               </div>
               <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-20 w-full">
                 <path d={trendPath} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary" />

@@ -535,7 +535,7 @@ export default function WalletPage() {
                   <p className="text-xl font-semibold text-foreground">$0</p>
                 </div>
                 <div className="rounded-full bg-amber-500/10 p-2">
-                  <TrendingUp className="h-4 w-4 text-amber-600" />
+                  <TrendingUp className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 </div>
               </div>
             </CardContent>
@@ -546,10 +546,10 @@ export default function WalletPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Profit/Loss</p>
-                  <p className="text-xl font-semibold text-emerald-600">+$0</p>
+                  <p className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">+$0</p>
                 </div>
                 <div className="rounded-full bg-emerald-500/10 p-2">
-                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
               </div>
             </CardContent>
@@ -567,7 +567,7 @@ export default function WalletPage() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">{accountType === "demo" ? "Demo account" : "Real account"}</span>
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600">Live</span>
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">Live</span>
               </div>
             </div>
           </CardHeader>
@@ -597,7 +597,7 @@ export default function WalletPage() {
                       <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt || tx.date)}</p>
                     </div>
                     <div className="text-right">
-                      <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-emerald-600"}`}>
+                      <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
                         {tx.type === "debit" ? "-" : "+"}${Number(tx.amount || 0).toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">Balance {Number(tx.balanceAfter || 0).toLocaleString()}</p>
