@@ -44,7 +44,11 @@ export default function HistoryPage() {
 
   return (
     <div className="p-6 lg:p-8 bgmain">
-      <Card className="border-border/50">
+      <div className="mb-6">
+        <p className="text-sm font-medium text-primary">Activity</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">Transactions</h1>
+      </div>
+      <Card className="border-border shadow-sm">
         <CardHeader>
           <CardTitle>All Transactions</CardTitle>
           <CardDescription>Complete history of your trading activity</CardDescription>
@@ -60,7 +64,7 @@ export default function HistoryPage() {
               {userData.wallet.transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((trade) => (
                 <div
                   key={`${trade.createdAt}-${trade.type}`}
-                  className="flex items-center justify-between rounded-lg border border-border/50 p-4 transition-colors hover:bg-accent"
+                  className="flex items-center justify-between rounded-lg border border-border bg-muted/20 p-4 transition-colors hover:bg-accent"
                 >
                   <div className="flex items-center gap-4">
                     <div

@@ -312,17 +312,17 @@ export default function WalletPage() {
 
   return (
     <div className="p-6 lg:p-8 bgmain">
-      <div className="mb-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background/60 to-background p-5 shadow-sm">
+      <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm shadow-foreground/[0.03]">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="mb-2 flex items-center gap-2 text-sm text-primary">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
               <Sparkles className="h-4 w-4" />
               <span>Live balance management</span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Wallet</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Wallet</h1>
             <p className="mt-1 text-sm text-muted-foreground">Manage your funds, update the demo balance and keep the sidebar synced automatically.</p>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-border/60 bg-background/70 p-1">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-muted/40 p-1">
             <button
               className={`rounded-full px-3 py-1.5 text-sm transition ${accountType === "real" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               onClick={() => setAccountType("real")}
@@ -351,7 +351,7 @@ export default function WalletPage() {
         )}
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-transparent shadow-sm">
+          <Card className="border-primary/25 bg-primary/[0.04] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="rounded-full bg-primary/20 p-2">
@@ -400,7 +400,7 @@ export default function WalletPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-destructive/30 bg-gradient-to-br from-destructive/10 to-transparent shadow-sm">
+          <Card className="border-destructive/25 bg-destructive/[0.04] shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="rounded-full bg-destructive/20 p-2">
@@ -499,26 +499,26 @@ export default function WalletPage() {
         )}
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
-          <Card className="border-border/50 shadow-sm bg-gradient-to-br from-primary/10 to-transparent">
+          <Card className="border-border shadow-sm bg-primary/[0.04]">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="rounded-full bg-primary/20 p-2">
+                <div className="rounded-full bg-primary/10 p-2">
                   <Wallet className="h-4 w-4 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Total Balance</p>
-                  <p className="text-xl font-bold">${balance.toLocaleString()}</p>
+                  <p className="text-xl font-semibold text-foreground">${balance.toLocaleString()}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-border shadow-sm">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Available</p>
-                  <p className="text-xl font-bold text-primary">${balance.toLocaleString()}</p>
+                  <p className="text-xl font-semibold text-primary">${balance.toLocaleString()}</p>
                 </div>
                 <div className="rounded-full bg-primary/10 p-2">
                   <BadgeDollarSign className="h-4 w-4 text-primary" />
@@ -527,36 +527,36 @@ export default function WalletPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-border shadow-sm">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">In Positions</p>
-                  <p className="text-xl font-bold">$0</p>
+                  <p className="text-xl font-semibold text-foreground">$0</p>
                 </div>
                 <div className="rounded-full bg-amber-500/10 p-2">
-                  <TrendingUp className="h-4 w-4 text-amber-400" />
+                  <TrendingUp className="h-4 w-4 text-amber-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-border shadow-sm">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Profit/Loss</p>
-                  <p className="text-xl font-bold text-primary">+$0</p>
+                  <p className="text-xl font-semibold text-emerald-600">+$0</p>
                 </div>
                 <div className="rounded-full bg-emerald-500/10 p-2">
-                  <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Card className="mt-4 border-border/50 shadow-sm">
+        <Card className="mt-4 border-border shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -567,37 +567,37 @@ export default function WalletPage() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">{accountType === "demo" ? "Demo account" : "Real account"}</span>
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400">Live</span>
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600">Live</span>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="mb-4 overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary/10 via-background/80 to-background p-4">
+            <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-muted/30 p-4">
               <div className="mb-2 flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Balance trend</p>
                   <p className="text-lg font-semibold text-foreground">${balance.toLocaleString()}</p>
                 </div>
-                <div className="rounded-full border border-primary/20 bg-background/70 px-2.5 py-1 text-xs text-primary">{transactions.length} updates</div>
+                <div className="rounded-full border border-primary/20 bg-card px-2.5 py-1 text-xs text-primary">{transactions.length} updates</div>
               </div>
               <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-36 w-full">
-                <path d={chartPath} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
+                <path d={chartPath} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary" />
               </svg>
             </div>
             {transactions.length > 0 ? (
               <div className="space-y-3">
-                <div className="flex items-center justify-between rounded-lg border border-border/40 bg-background/70 px-3 py-2 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
                   <span>Showing page {page} of {totalPages}</span>
                   <span>{transactions.length} entries</span>
                 </div>
                 {visibleTransactions.map((tx, index) => (
-                  <div key={`${tx.description || tx.type}-${index}`} className="flex items-center justify-between rounded-xl border border-border/40 bg-gradient-to-r from-background/70 to-background/40 px-3 py-3 shadow-sm">
+                  <div key={`${tx.description || tx.type}-${index}`} className="flex items-center justify-between rounded-xl border border-border bg-muted/20 px-3 py-3 shadow-sm">
                     <div>
                       <p className="font-medium text-foreground">{tx.description || tx.type || "Transaction"}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt || tx.date)}</p>
                     </div>
                     <div className="text-right">
-                      <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-primary"}`}>
+                      <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-emerald-600"}`}>
                         {tx.type === "debit" ? "-" : "+"}${Number(tx.amount || 0).toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">Balance {Number(tx.balanceAfter || 0).toLocaleString()}</p>

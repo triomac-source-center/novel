@@ -212,7 +212,7 @@ export default function MarketPage() {
             <Sparkles className="h-4 w-4" />
             <span>triomac60 cluster investment</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Cluster Market</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Cluster Market</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
             Buy one or more cells at the active layer price. A completed layer opens the next one; the final layer closes the cluster.
           </p>
@@ -221,7 +221,7 @@ export default function MarketPage() {
       </div>
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50">
+        <Card className="border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-primary/20 p-2">
@@ -235,7 +235,7 @@ export default function MarketPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50">
+        <Card className="border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-primary/20 p-2">
@@ -249,7 +249,7 @@ export default function MarketPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50">
+        <Card className="border-border">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-destructive/20 p-2">
@@ -266,7 +266,7 @@ export default function MarketPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-4">
-          <Card className="border-border/50">
+          <Card className="border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Available clusters</CardTitle>
               <div className="relative">
@@ -293,7 +293,7 @@ export default function MarketPage() {
                   <button
                     key={clusterKey}
                     onClick={() => setSelectedClusterId(clusterKey)}
-                    className={`w-full rounded-xl border p-4 text-left transition-colors ${isSelected ? "border-primary bg-primary/10" : "border-border/50 bg-background/50 hover:bg-accent"}`}
+                    className={`w-full rounded-xl border p-4 text-left transition-colors ${isSelected ? "border-primary bg-primary/10" : "border-border bg-muted/20 hover:bg-accent"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -336,7 +336,7 @@ export default function MarketPage() {
         </div>
 
         <div className="space-y-4">
-          <Card className="border-border/50">
+          <Card className="border-border">
             <CardHeader>
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -395,7 +395,7 @@ export default function MarketPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50">
+          <Card className="border-border">
             <CardHeader>
               <CardTitle>Fund a cell</CardTitle>
               <p className="text-sm text-muted-foreground">

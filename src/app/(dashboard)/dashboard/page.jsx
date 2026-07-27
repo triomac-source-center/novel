@@ -130,7 +130,7 @@ export default function DashboardPage() {
     }
   }, [])
 
-  if (!user) return null
+  if (!user) return null 
   if (!isSignedIn) return <p>Please log in</p>
   if (accountLoading || clustersLoading) {
     return (
@@ -173,7 +173,7 @@ export default function DashboardPage() {
       value: `$${demoBalance.toLocaleString()}`,
       subtitle: "Practice balance",
       icon: CircleDollarSign,
-      accent: "text-amber-400",
+      accent: "text-amber-600",
       badge: "Demo",
     },
     {
@@ -181,7 +181,7 @@ export default function DashboardPage() {
       value: `$${availableFunds.toLocaleString()}`,
       subtitle: "Ready to deploy",
       icon: Wallet,
-      accent: "text-emerald-400",
+      accent: "text-emerald-600",
       badge: "Liquid",
     },
     {
@@ -189,7 +189,7 @@ export default function DashboardPage() {
       value: `$${invested.toLocaleString()}`,
       subtitle: "In clusters",
       icon: Layers3,
-      accent: "text-blue-400",
+      accent: "text-blue-600",
       badge: "Active",
     },
   ]
@@ -248,24 +248,24 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 bgmain">
-      <div className="mb-6 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-background/70 to-background p-5 shadow-sm">
+    <div className="bgmain p-6 lg:p-8">
+      <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm shadow-foreground/[0.03]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <div className="mb-2 flex items-center gap-2 text-sm text-primary">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
               <Sparkles className="h-4 w-4" />
               <span>Portfolio overview</span>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
             <p className="mt-1 text-sm text-muted-foreground">Everything is now gathered in one place: your accounts, clusters, recent actions and momentum.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/60 bg-background/70 p-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-muted/40 p-3">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Balance trend</p>
-              <p className="text-lg font-semibold text-white">+$3.2k this week</p>
+              <p className="text-lg font-semibold text-emerald-600">+$3.2k this week</p>
             </div>
             <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-16 w-40">
-              <path d={trendPath} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
+              <path d={trendPath} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary" />
             </svg>
           </div>
         </div>
@@ -275,18 +275,18 @@ export default function DashboardPage() {
         {accountCards.map((card) => {
           const Icon = card.icon
           return (
-            <Card key={card.title} className="border-border/50 shadow-sm">
+            <Card key={card.title} className="border-border shadow-sm shadow-foreground/[0.02]">
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <div>
                   <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
                   <CardDescription>{card.subtitle}</CardDescription>
                 </div>
-                <div className={`rounded-full bg-background/70 p-2 ${card.accent}`}>
+                <div className={`rounded-full bg-muted p-2 ${card.accent}`}>
                   <Icon className="h-4 w-4" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{card.value}</div>
+                <div className="text-2xl font-semibold tracking-tight">{card.value}</div>
                 <div className="mt-2 flex items-center gap-2">
                   <Badge variant="outline" className="text-xs">{card.badge}</Badge>
                   <span className="text-xs text-muted-foreground">Updated now</span>
@@ -298,7 +298,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <Card className="border-border/50 shadow-sm">
+        <Card className="border-border shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Layers3 className="h-5 w-5 text-primary" />
@@ -308,7 +308,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {displayClusters.map((cluster) => (
-              <div key={cluster.id ?? cluster.name} className="rounded-xl border border-border/50 bg-background/60 p-4">
+              <div key={cluster.id ?? cluster.name} className="rounded-xl border border-border bg-muted/30 p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-foreground">{cluster.name}</p>
@@ -328,7 +328,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 shadow-sm">
+        <Card className="border-border shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock3 className="h-5 w-5 text-primary" />
@@ -339,13 +339,13 @@ export default function DashboardPage() {
           <CardContent className="space-y-3">
             {recentTransactions.length > 0 ? (
               recentTransactions.map((tx, index) => (
-                <div key={`${tx.description || tx.type || "transaction"}-${index}`} className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-3">
+                <div key={`${tx.description || tx.type || "transaction"}-${index}`} className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-3">
                   <div>
                     <p className="font-medium text-foreground">{tx.description || tx.type || "Transaction"}</p>
                     <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt || tx.date)}</p>
                   </div>
                   <div className="text-right">
-                    <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-primary"}`}>
+                    <p className={`font-semibold ${tx.type === "debit" ? "text-destructive" : "text-emerald-600"}`}>
                       {tx.type === "debit" ? "-" : "+"}${Number(tx.amount || 0).toLocaleString()}
                     </p>
                     <p className="text-xs text-muted-foreground">Balance {Number(tx.balanceAfter || 0).toLocaleString()}</p>
@@ -353,7 +353,7 @@ export default function DashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-lg border border-dashed border-border/60 px-4 py-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
                 No transactions yet for this account.
               </div>
             )}
@@ -362,7 +362,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card className="border-border/50 shadow-sm">
+        <Card className="border-border shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
@@ -371,26 +371,26 @@ export default function DashboardPage() {
             <CardDescription>Jump directly to wallet, market or transactions</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
-            <Link href="/wallet" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
-              <p className="font-medium">Go to Wallet</p>
+            <Link href="/wallet" className="rounded-xl border border-border bg-muted/30 p-3 transition-colors hover:border-primary/30 hover:bg-accent">
+              <p className="font-medium text-foreground">Go to Wallet</p>
               <p className="text-xs text-muted-foreground">Manage real and demo balances</p>
             </Link>
-            <Link href="/market" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
-              <p className="font-medium">Open Market</p>
+            <Link href="/market" className="rounded-xl border border-border bg-muted/30 p-3 transition-colors hover:border-primary/30 hover:bg-accent">
+              <p className="font-medium text-foreground">Open Market</p>
               <p className="text-xs text-muted-foreground">See available clusters</p>
             </Link>
-            <Link href="/transactions" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
-              <p className="font-medium">View Transactions</p>
+            <Link href="/transactions" className="rounded-xl border border-border bg-muted/30 p-3 transition-colors hover:border-primary/30 hover:bg-accent">
+              <p className="font-medium text-foreground">View Transactions</p>
               <p className="text-xs text-muted-foreground">See account history</p>
             </Link>
-            <Link href="/profile" className="rounded-xl border border-border/50 bg-background/60 p-3 hover:bg-primary/10">
-              <p className="font-medium">Profile</p>
+            <Link href="/profile" className="rounded-xl border border-border bg-muted/30 p-3 transition-colors hover:border-primary/30 hover:bg-accent">
+              <p className="font-medium text-foreground">Profile</p>
               <p className="text-xs text-muted-foreground">Manage your personal info</p>
             </Link>
           </CardContent>
         </Card>
 
-        <Card className="border-border/50 shadow-sm">
+        <Card className="border-border shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
@@ -399,30 +399,30 @@ export default function DashboardPage() {
             <CardDescription>This week’s summary</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/10 to-background p-4">
+            <div className="rounded-2xl border border-border bg-muted/30 p-4">
               <div className="mb-3 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Latest balance trend</p>
-                  <p className="text-xl font-semibold text-white">${totalBalance.toLocaleString()}</p>
+                  <p className="text-xl font-semibold text-foreground">${totalBalance.toLocaleString()}</p>
                 </div>
-                <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-400">Live</div>
+                <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600">Live</div>
               </div>
               <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="h-20 w-full">
-                <path d={trendPath} fill="none" stroke="currentColor" strokeWidth="3" className="text-primary" />
+                <path d={trendPath} fill="none" stroke="currentColor" strokeWidth="2.5" className="text-primary" />
               </svg>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-border/40 bg-background/60 p-3">
+              <div className="rounded-xl border border-border bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">Success rate</p>
-                <p className="mt-1 text-lg font-semibold text-white">84%</p>
+                <p className="mt-1 text-lg font-semibold text-foreground">84%</p>
               </div>
-              <div className="rounded-xl border border-border/40 bg-background/60 p-3">
+              <div className="rounded-xl border border-border bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">Hold time</p>
-                <p className="mt-1 text-lg font-semibold text-white">3.2d</p>
+                <p className="mt-1 text-lg font-semibold text-foreground">3.2d</p>
               </div>
-              <div className="rounded-xl border border-border/40 bg-background/60 p-3">
+              <div className="rounded-xl border border-border bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground">Signals</p>
-                <p className="mt-1 text-lg font-semibold text-white">+7</p>
+                <p className="mt-1 text-lg font-semibold text-foreground">+7</p>
               </div>
             </div>
           </CardContent>

@@ -151,7 +151,7 @@ export default function ClusterPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">
-          <Card className="border-border/50">
+          <Card className="border-border">
             <CardHeader>
               <CardTitle>Cluster Cells</CardTitle>
             </CardHeader>
@@ -166,7 +166,7 @@ export default function ClusterPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50">
+          <Card className="border-border">
             <CardHeader>
               <CardTitle>Holders</CardTitle>
             </CardHeader>
@@ -174,7 +174,7 @@ export default function ClusterPage() {
               {Array.isArray(cluster.holders) && cluster.holders.length > 0 ? (
                 <div className="space-y-2">
                   {cluster.holders.map((holder, index) => (
-                    <div key={index} className="flex items-center justify-between rounded-lg border border-border/40 bg-background/60 px-3 py-2 text-sm">
+                    <div key={index} className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm">
                       <span className="text-muted-foreground">{holder.clerkId}</span>
                       <span className="font-medium">{holder.cells} cell(s) \u2022 {formatCurrency(holder.amount)}</span>
                     </div>
@@ -188,7 +188,7 @@ export default function ClusterPage() {
         </div>
 
         <div className="space-y-4">
-          <Card className="border-border/50">
+          <Card className="border-border">
             <CardHeader>
               <CardTitle>Summary</CardTitle>
             </CardHeader>
@@ -243,7 +243,7 @@ export default function ClusterPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/50">
+          <Card className="border-border">
             <CardHeader>
               <CardTitle>Actions</CardTitle>
             </CardHeader>

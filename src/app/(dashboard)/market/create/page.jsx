@@ -30,7 +30,7 @@ export default function CreateClusterPage() {
 
   if (!isSignedIn) return <p className="p-8">Please log in</p>
   const isAdmin = clerkUser?.publicMetadata?.role === "admin" || clerkUser?.id === process.env.NEXT_PUBLIC_TRIOMAC60_ADMIN_CLERK_ID
-  if (!isAdmin) return <div className="p-6 lg:p-8 bgmain"><h1 className="text-2xl font-bold text-white">Admin access required</h1><p className="mt-2 text-sm text-muted-foreground">Only the triomac60 system administrator can create clusters.</p></div>
+  if (!isAdmin) return <div className="p-6 lg:p-8 bgmain"><h1 className="text-2xl font-semibold text-foreground">Admin access required</h1><p className="mt-2 text-sm text-muted-foreground">Only the triomac60 system administrator can create clusters.</p></div>
 
   const parsedCellCount = Number(cellCount)
   const parsedCellValue = Number(cellValue)
@@ -95,12 +95,12 @@ export default function CreateClusterPage() {
           <Layers3 className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Create a cluster</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Create a cluster</h1>
           <p className="text-sm text-muted-foreground">Define the structure investors will fund.</p>
         </div>
       </div>
 
-      <Card className="max-w-2xl border-border/50">
+      <Card className="max-w-2xl border-border">
         <CardHeader>
           <CardTitle>Cluster details</CardTitle>
         </CardHeader>

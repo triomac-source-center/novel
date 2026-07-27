@@ -94,7 +94,7 @@ export function NotificationBell() {
     <div className="relative" ref={containerRef}>
       <button
         onClick={handleOpen}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/60 text-muted-foreground hover:text-white transition-colors"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted/40 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         aria-label="Notifications"
       >
         <Bell className="h-4 w-4" />
@@ -106,9 +106,9 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-80 rounded-xl border border-border/50 bg-card shadow-lg">
-          <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
-            <p className="text-sm font-semibold text-white">Notifications</p>
+        <div className="absolute right-0 z-40 mt-2 w-80 rounded-xl border border-border bg-card shadow-lg shadow-foreground/5">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <p className="text-sm font-semibold text-foreground">Notifications</p>
             {unreadCount > 0 && (
               <button onClick={handleMarkAllRead} className="text-xs text-primary hover:underline">
                 Mark all as read
@@ -123,12 +123,12 @@ export function NotificationBell() {
                 <button
                   key={notification._id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`flex w-full flex-col items-start gap-0.5 border-b border-border/20 px-4 py-3 text-left transition-colors hover:bg-primary/5 ${
+                  className={`flex w-full flex-col items-start gap-0.5 border-b border-border/60 px-4 py-3 text-left transition-colors hover:bg-accent ${
                     notification.read ? "opacity-60" : ""
                   }`}
                 >
                   <div className="flex w-full items-center justify-between">
-                    <p className="text-sm font-medium text-white">{notification.title}</p>
+                    <p className="text-sm font-medium text-foreground">{notification.title}</p>
                     {!notification.read && <span className="h-2 w-2 rounded-full bg-primary" />}
                   </div>
                   {notification.message && (
