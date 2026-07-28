@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Layers3 } from "lucide-react"
 import { createCluster } from "@/lib/api-client"
 import { formatCurrency } from "@/lib/cluster-utils"
+import { getAdminAccessCode } from "@/lib/admin"
 
 const ALGORITHMS = ["mean-reversion", "momentum", "grid", "scalping", "trend-following"]
 
@@ -64,6 +65,7 @@ export default function AdminNewClusterPage() {
     try {
       await createCluster({
         clerkId: clerkUser.id,
+        adminCode: getAdminAccessCode(),
         symbol,
         name,
         description,

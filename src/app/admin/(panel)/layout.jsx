@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useUser } from "@clerk/nextjs"
 import { LayoutDashboard, Layers3, Lock, PlusCircle, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -15,10 +14,6 @@ const navigation = [
 export default function AdminPanelLayout({ children }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user: clerkUser } = useUser()
-  const isRecognizedAdmin =
-    clerkUser?.publicMetadata?.role === "admin" ||
-    clerkUser?.id === process.env.NEXT_PUBLIC_TRIOMAC60_ADMIN_CLERK_ID
 
   const handleLock = async () => {
     await fetch("/api/admin/access", { method: "DELETE" })
@@ -70,12 +65,6 @@ export default function AdminPanelLayout({ children }) {
           </div>
         </div>
       </header>
-
-      {!isRecognizedAdmin && (
-        <div className="border-b border-amber-500/20 bg-amber-500/10 px-6 py-2 text-center text-xs font-medium text-amber-600 dark:text-amber-400">
-          You're viewing the admin panel, but this Clerk account isn't recognized as the triomac60 administrator — mutating actions will be rejected by the server.
-        </div>
-      )}
 
       <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
     </div>

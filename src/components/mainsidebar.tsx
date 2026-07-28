@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { History, LayoutDashboard, Layers3, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { hasAdminAccess } from "@/lib/admin"
 import { useEffect, useState } from "react"
 
 const navigation = [
@@ -13,11 +14,6 @@ const navigation = [
   { name: "Activity", href: "/transactions", icon: History },
   { name: "Profile", href: "/profile", icon: UserRound },
 ]
-
-function hasAdminCookie() {
-  if (typeof document === "undefined") return false
-  return document.cookie.split("; ").some((entry) => entry.startsWith("triomac60_admin_ui=1"))
-}
 
 export function Sidebar({ wallet }) {
   const pathname = usePathname()
@@ -31,7 +27,7 @@ export function Sidebar({ wallet }) {
     window.addEventListener("wallet-balance-updated", onUpdate)
     return () => window.removeEventListener("wallet-balance-updated", onUpdate)
   }, [wallet?.balance])
-  useEffect(() => setShowAdminLink(hasAdminCookie()), [pathname])
+  useEffect(() => setShowAdminLink(hasAdminAccess()), [pathname])
 
   const sidebar = (
     <aside className="flex h-full flex-col border-r border-border bg-card">

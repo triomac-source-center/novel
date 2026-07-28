@@ -13,11 +13,11 @@ export async function POST(request) {
   }
 
   const response = NextResponse.json({ success: true })
-  // Not httpOnly: this cookie only unlocks the /admin UI shell (see middleware.js) and
-  // lets client components decide whether to show the "Admin" nav link. It grants no
-  // real authorization by itself — mutating admin actions are still checked server-side
-  // against the Clerk admin id (see novel-server/routes/cluster_route.js `isAdmin`).
-  response.cookies.set(ADMIN_UI_COOKIE, "1", {
+  // Not httpOnly: the cookie holds the code itself so client components can read it
+  // (see src/lib/admin.js) and attach it to admin mutation requests (create/publish/
+  // close cluster). The backend accepts this same code as real authorization — see
+  // novel-server/routes/cluster_route.js `isAdmin(clerkId, adminCode)`.
+  response.cookies.set(ADMIN_UI_COOKIE, code, {
     httpOnly: false,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

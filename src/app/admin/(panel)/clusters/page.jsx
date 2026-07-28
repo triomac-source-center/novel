@@ -19,6 +19,7 @@ import {
 import { Layers3, PlusCircle, Radio, XCircle } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 import { fetchClusters, publishCluster, closeCluster } from "@/lib/api-client"
+import { getAdminAccessCode } from "@/lib/admin"
 
 const STATUS_LABEL = {
   offline: { label: "Draft", variant: "outline" },
@@ -58,10 +59,11 @@ export default function AdminClustersPage() {
     setError("")
 
     try {
+      const payload = { clerkId: clerkUser.id, adminCode: getAdminAccessCode() }
       if (actionTarget.type === "publish") {
-        await publishCluster(actionTarget.cluster._id, { clerkId: clerkUser.id })
+        await publishCluster(actionTarget.cluster._id, payload)
       } else {
-        await closeCluster(actionTarget.cluster._id, { clerkId: clerkUser.id })
+        await closeCluster(actionTarget.cluster._id, payload)
       }
       setActionTarget(null)
       await loadClusters()

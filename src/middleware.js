@@ -7,7 +7,7 @@ export default clerkMiddleware((auth, req) => {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith('/admin') && pathname !== '/admin/access') {
-    const hasAdminAccess = req.cookies.get(ADMIN_UI_COOKIE)?.value === '1';
+    const hasAdminAccess = Boolean(req.cookies.get(ADMIN_UI_COOKIE)?.value);
     if (!hasAdminAccess) {
       const url = req.nextUrl.clone();
       url.pathname = '/admin/access';
