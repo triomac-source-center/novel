@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EmptyState } from "@/components/empty-state"
-import { ArrowLeft, Share2, Users } from "lucide-react"
+import { ArrowLeft, Lock, Share2, Users } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 import { fetchClusterById, fetchUsersByClerkIds, investInCluster } from "@/lib/api-client"
 import { useWallet } from "@/lib/wallet-context"
@@ -156,6 +156,10 @@ export default function ClusterPage() {
     }
   }
 
+  const completedLayers = Array.isArray(cluster.layerHistory)
+    ? cluster.layerHistory.filter((entry) => entry.completedAt)
+    : []
+
   const summaryTiles = [
     { label: "Entry per cell", value: formatCurrency(metrics.currentCellPrice), accent: "text-primary" },
     { label: "Cells remaining", value: metrics.remainingCells, accent: "text-foreground" },
@@ -205,14 +209,35 @@ export default function ClusterPage() {
               <CardTitle>Cluster cells</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-1 sm:grid-cols-[repeat(18,minmax(0,1fr))]">
+              {completedLayers.length > 0 && (
+                <div className="mb-4 space-y-1.5">
+                  {completedLayers.map((entry) => (
+                    <div key={entry.layer} className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-2.5 py-1.5 text-xs">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-[10px]">Layer {entry.layer}</Badge>
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Lock className="h-3 w-3" />
+                          Locked
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 text-muted-foreground">
+                        <span>{entry.filledCells} cells</span>
+                        <span>{formatCurrency(entry.pricePerCell)}/cell</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Layer {metrics.currentLayer} — active</p>
+              <div className="flex flex-wrap gap-[3px]">
                 {Array.from({ length: cluster.cellCount }).map((_, i) => {
                   const filled = i < cluster.filledCells
                   return (
                     <div
                       key={i}
                       title={filled ? "Filled by an investor" : "Empty cell"}
-                      className={`aspect-square rounded-sm border ${filled ? "border-primary bg-primary/70" : "border-border bg-muted/40"}`}
+                      className={`h-2 w-2 rounded-[2px] ${filled ? "bg-primary" : "border border-border bg-muted/40"}`}
                     />
                   )
                 })}

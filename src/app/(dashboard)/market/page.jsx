@@ -9,11 +9,20 @@ import { StatCard } from "@/components/stat-card"
 import { EmptyState } from "@/components/empty-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { CircleDollarSign, Layers3, PlusCircle, Search, TrendingDown, TrendingUp } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 import { fetchClusters as fetchClustersApi } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
+
+const CLUSTER_COLORS = [
+  { bg: "bg-blue-500/15", text: "text-blue-400" },
+  { bg: "bg-emerald-500/15", text: "text-emerald-400" },
+  { bg: "bg-amber-500/15", text: "text-amber-400" },
+  { bg: "bg-purple-500/15", text: "text-purple-400" },
+  { bg: "bg-pink-500/15", text: "text-pink-400" },
+  { bg: "bg-cyan-500/15", text: "text-cyan-400" },
+]
 
 const demoClusters = [
   { id: "cluster-alpha", symbol: "TRI-01", name: "Alpha Cluster", cellCount: 10, cellValue: 1000, currentLayer: 1, maxLayers: 4, layerStep: 100, filledCells: 4, creator: "triomac60", description: "Early-stage growth cluster with strong momentum." },
@@ -136,41 +145,44 @@ export default function MarketPage() {
       {filteredClusters.length === 0 ? (
         <EmptyState icon={Search} title="No cluster matches your search" description="Try a different name or symbol." />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredClusters.map((cluster) => {
+        <div className="overflow-hidden rounded-xl border border-border">
+          {filteredClusters.map((cluster, index) => {
             const metrics = cluster.metrics
             const clusterKey = getClusterId(cluster, 0)
+            const isClosed = metrics.isClosed
+            const color = CLUSTER_COLORS[index % CLUSTER_COLORS.length]
 
             return (
-              <Link key={clusterKey} href={`/market/${clusterKey}`}>
-                <Card className="h-full border-border shadow-sm transition-colors hover:border-primary/40">
-                  <CardContent className="pt-6">
-                    <div className="mb-3 flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-foreground">{cluster.name}</p>
-                        <p className="text-xs text-muted-foreground">{cluster.symbol} • {cluster.creator}</p>
-                      </div>
-                      <Badge variant={metrics.isClosed ? "outline" : "secondary"} className="shrink-0 text-xs">
-                        {metrics.isClosed ? "Closed" : "Open"}
-                      </Badge>
-                    </div>
+              <Link
+                key={clusterKey}
+                href={`/market/${clusterKey}`}
+                className={cn(
+                  "flex items-center gap-3 border-b border-border bg-card px-4 py-3 transition-colors last:border-b-0 hover:bg-accent",
+                  isClosed && "opacity-60"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold",
+                    isClosed ? "bg-muted text-muted-foreground" : `${color.bg} ${color.text}`
+                  )}
+                >
+                  {cluster.symbol.slice(0, 2)}
+                </span>
 
-                    <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">{cluster.description}</p>
+                <div className="min-w-0 flex-1">
+                  <p className={cn("truncate text-sm font-medium", isClosed ? "text-muted-foreground" : "text-foreground")}>{cluster.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{cluster.symbol} • {cluster.creator}</p>
+                </div>
 
-                    <div className="mb-3 flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Entry per cell</span>
-                      <span className="font-semibold text-foreground">{formatCurrency(metrics.currentCellPrice)}</span>
-                    </div>
+                <div className="hidden shrink-0 text-right sm:block">
+                  <p className={cn("text-sm font-semibold", isClosed ? "text-muted-foreground" : "text-foreground")}>{formatCurrency(metrics.currentCellPrice)}</p>
+                  <p className="text-xs text-muted-foreground">{metrics.remainingCells} left • layer {metrics.currentLayer}/{metrics.maxLayers}</p>
+                </div>
 
-                    <div className="h-2 rounded-full bg-muted">
-                      <div className="h-2 rounded-full bg-primary" style={{ width: `${metrics.progress}%` }} />
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{metrics.remainingCells} cells left</span>
-                      <span>layer {metrics.currentLayer}/{metrics.maxLayers}</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Badge variant={isClosed ? "outline" : "secondary"} className="shrink-0 text-xs">
+                  {isClosed ? "Closed" : "Open"}
+                </Badge>
               </Link>
             )
           })}

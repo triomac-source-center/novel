@@ -77,11 +77,15 @@ function buildPositions(clusters, clerkId) {
   return positions.sort((a, b) => new Date(b.openedAt) - new Date(a.openedAt))
 }
 
+const TICK_INTERVAL_MS = 1000
+const TICK_STEP = 0.01
+
 export default function TradePage() {
   const { user: clerkUser, isSignedIn } = useUser()
   const { real } = useWallet()
   const [clusters, setClusters] = useState([])
   const [loading, setLoading] = useState(true)
+  const [ticks, setTicks] = useState({})
 
   useEffect(() => {
     let isActive = true
@@ -106,7 +110,31 @@ export default function TradePage() {
   }, [])
 
   const positions = useMemo(() => buildPositions(clusters, clerkUser?.id), [clusters, clerkUser?.id])
-  const floatingPnl = positions.reduce((sum, position) => sum + position.profit, 0)
+
+  // Simulated live feed: nudge each open position's price by +/- $0.01 every second so the
+  // terminal feels alive between real cluster updates, without touching any real balance data.
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setTicks((prev) => {
+        const next = { ...prev }
+        for (const position of positions) {
+          const delta = Math.random() < 0.5 ? -TICK_STEP : TICK_STEP
+          next[position.key] = (next[position.key] ?? 0) + delta
+        }
+        return next
+      })
+    }, TICK_INTERVAL_MS)
+    return () => clearInterval(tick)
+  }, [positions])
+
+  const livePositions = positions.map((position) => {
+    const jitter = ticks[position.key] ?? 0
+    const livePrice = position.markPrice + jitter
+    const liveProfit = position.profit + jitter * position.cells
+    return { ...position, livePrice, liveProfit }
+  })
+
+  const floatingPnl = livePositions.reduce((sum, position) => sum + position.liveProfit, 0)
   const equity = real.balance + floatingPnl
 
   if (!isSignedIn) return <p>Please log in</p>
@@ -159,7 +187,7 @@ export default function TradePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {positions.map((position) => (
+                {livePositions.map((position) => (
                   <TableRow key={position.key}>
                     <TableCell>
                       <Link href={`/market/${position.clusterId}`} className="font-medium text-foreground hover:text-primary">
@@ -174,10 +202,10 @@ export default function TradePage() {
                     </TableCell>
                     <TableCell className="text-right text-foreground">{position.cells}</TableCell>
                     <TableCell className="text-right text-muted-foreground">{formatCurrency(position.entryPrice)}</TableCell>
-                    <TableCell className="text-right text-foreground">{formatCurrency(position.markPrice)}</TableCell>
-                    <TableCell className={`text-right font-semibold ${position.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
-                      {position.profit >= 0 ? "+" : ""}
-                      {formatCurrency(position.profit)}
+                    <TableCell className="text-right font-mono text-foreground">{formatCurrency(position.livePrice)}</TableCell>
+                    <TableCell className={`text-right font-mono font-semibold ${position.liveProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                      {position.liveProfit >= 0 ? "+" : ""}
+                      {formatCurrency(position.liveProfit)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{new Date(position.openedAt).toLocaleString()}</TableCell>
                   </TableRow>

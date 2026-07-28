@@ -29,8 +29,8 @@ export function Sidebar() {
   const sidebar = (
     <aside className="flex h-full flex-col border-r border-border bg-card">
       <div className="border-b border-border px-5 py-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Capital available</p>
-        <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">${real.balance.toLocaleString()}</p>
+        <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Capital available</p>
+        <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">${real.balance.toLocaleString()}</p>
         <Link
           href="/wallet"
           className="mt-4 flex items-center justify-between rounded-xl border border-primary/20 bg-primary/[0.06] px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
@@ -39,7 +39,7 @@ export function Sidebar() {
         </Link>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-5">
-        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Workspace</p>
+        <p className="px-3 pb-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Workspace</p>
         {navigation.map((item) => {
           const active = pathname === item.href || (item.href !== "/dashboard" && pathname?.startsWith(`${item.href}/`))
           return (
@@ -62,7 +62,7 @@ export function Sidebar() {
 
         {showAdminLink && (
           <>
-            <p className="px-3 pt-4 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Admin</p>
+            <p className="px-3 pt-4 pb-2 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Admin</p>
             <Link
               href="/admin"
               onClick={() => setMobileMenuOpen(false)}

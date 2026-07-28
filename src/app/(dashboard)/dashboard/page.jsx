@@ -200,7 +200,11 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {displayClusters.map((cluster) => (
-              <div key={cluster.id ?? cluster.name} className="rounded-xl border border-border bg-muted/30 p-4">
+              <Link
+                key={cluster.id ?? cluster.name}
+                href={`/market/${cluster.id}`}
+                className="block rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:border-primary/40 hover:bg-accent"
+              >
                 <div className="mb-2 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-foreground">{cluster.name}</p>
@@ -215,7 +219,7 @@ export default function DashboardPage() {
                   <span>{cluster.progress}% filled</span>
                   <span>Target: ${cluster.target.toLocaleString()}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </CardContent>
         </Card>
