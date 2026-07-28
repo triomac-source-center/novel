@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useUser } from "@clerk/nextjs"
 import { PageHeader } from "@/components/page-header"
 import { EmptyState } from "@/components/empty-state"
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowDownRight, ArrowUpRight, History, Search } from "lucide-react"
-import { fetchUserProfile } from "@/lib/api-client"
+import { useWallet } from "@/lib/wallet-context"
 
 const FILTERS = [
   { value: "all", label: "All" },
@@ -20,34 +20,13 @@ const FILTERS = [
 
 export default function TransactionsPage() {
   const { user: clerkUser, isSignedIn } = useUser()
-  const [transactions, setTransactions] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { real, loading } = useWallet()
   const [filter, setFilter] = useState("all")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const pageSize = 8
 
-  useEffect(() => {
-    if (!clerkUser?.id) return
-    let isActive = true
-
-    async function fetchUser() {
-      try {
-        const data = await fetchUserProfile(clerkUser.id)
-        if (isActive) setTransactions(Array.isArray(data?.wallet?.transactions) ? data.wallet.transactions : [])
-      } catch (err) {
-        console.error(err)
-        if (isActive) setTransactions([])
-      } finally {
-        if (isActive) setLoading(false)
-      }
-    }
-
-    fetchUser()
-    return () => {
-      isActive = false
-    }
-  }, [clerkUser?.id])
+  const transactions = useMemo(() => real.transactions.filter((tx) => !tx.category || tx.category === "wallet"), [real.transactions])
 
   const filtered = useMemo(() => {
     return transactions
@@ -64,7 +43,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="bgmain p-6 lg:p-8">
-      <PageHeader eyebrow="Account history" icon={History} title="Transactions" description="Complete history of your deposits, withdrawals and cluster activity." />
+      <PageHeader eyebrow="Account history" icon={History} title="Transactions" description="Your wallet deposits and withdrawals — investment activity lives on the Portfolio page." />
 
       {loading ? (
         <div className="h-64 animate-pulse rounded-2xl border border-border bg-muted/30" />

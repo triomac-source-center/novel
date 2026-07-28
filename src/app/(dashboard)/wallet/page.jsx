@@ -14,13 +14,14 @@ import { EmptyState } from "@/components/empty-state"
 import { TrendChart } from "@/components/chart"
 import { ArrowUpRight, ArrowDownRight, Wallet, Sparkles, BadgeDollarSign, RotateCcw, Clock3 } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
-import { fetchUserProfile, postDeposit, fetchAccount, postFundAccount, postSetDemoBalance, postWithdraw } from "@/lib/api-client"
+import { useWallet } from "@/lib/wallet-context"
+import { postDeposit, postFundAccount, postSetDemoBalance, postWithdraw } from "@/lib/api-client"
 
 export default function WalletPage() {
   const { user: clerkUser, isSignedIn } = useUser()
-  const [userData, setUserData] = useState(null)
-  const { user, updateUser } = useAuth()
+  const { user } = useAuth()
   const router = useRouter()
+  const { real, demo, setBalance } = useWallet()
   const [mounted, setMounted] = useState(false)
   const [accountType, setAccountType] = useState("real")
   const [depositAmount, setDepositAmount] = useState("")
@@ -38,41 +39,14 @@ export default function WalletPage() {
   }, [user, router])
 
   useEffect(() => {
-    if (!clerkUser?.id || !isSignedIn) return
-    let isActive = true
-
-    async function loadProfile() {
-      try {
-        setLoading(true)
-        let data = null
-        try {
-          data = await fetchAccount(clerkUser.id, accountType)
-        } catch {
-          data = await fetchUserProfile(clerkUser.id)
-        }
-        if (isActive) {
-          const balance = data?.wallet?.balance ?? data?.balance ?? (accountType === "demo" ? 10000 : 0)
-          setUserData({ ...(data || {}), wallet: { ...(data?.wallet || {}), balance } })
-        }
-      } catch (err) {
-        console.error(err)
-        if (isActive) setError("Unable to load your wallet data right now.")
-      } finally {
-        if (isActive) setLoading(false)
-      }
-    }
-
-    loadProfile()
     setPage(1)
-    return () => {
-      isActive = false
-    }
-  }, [clerkUser, isSignedIn, accountType])
+  }, [accountType])
 
   if (!mounted || !user) return null
 
-  const balance = userData?.wallet?.balance ?? user?.balance ?? 0
-  const transactions = userData?.account?.transactions || userData?.wallet?.transactions || []
+  const account = accountType === "demo" ? demo : real
+  const balance = account.balance
+  const transactions = account.transactions.filter((tx) => !tx.category || tx.category === "wallet")
   const totalPages = Math.max(1, Math.ceil(transactions.length / pageSize))
   const orderedTransactions = transactions.slice().reverse()
   const visibleTransactions = orderedTransactions.slice((page - 1) * pageSize, page * pageSize)
@@ -103,16 +77,12 @@ export default function WalletPage() {
 
       if (accountType === "demo") {
         const result = await postFundAccount({ clerkId: clerkUser.id, amount, type: "demo", description: "Demo account funding" })
-        const updatedBalance = result?.balance ?? balance + amount
-        setUserData((prev) => (prev ? { ...prev, wallet: { ...prev.wallet, balance: updatedBalance } } : prev))
-        updateUser({ balance: updatedBalance })
+        setBalance("demo", result?.balance ?? balance + amount, result?.wallet?.transactions)
         setDepositAmount("")
         setFeedback(`Demo deposit applied: $${amount.toFixed(2)}`)
       } else {
-        await postDeposit({ clerkId: clerkUser.id, amount, description: "Wallet deposit" })
-        const updatedBalance = balance + amount
-        setUserData((prev) => (prev ? { ...prev, wallet: { ...prev.wallet, balance: updatedBalance } } : prev))
-        updateUser({ balance: updatedBalance })
+        const result = await postDeposit({ clerkId: clerkUser.id, amount, description: "Wallet deposit" })
+        setBalance("real", result?.wallet?.balance ?? balance + amount, result?.wallet?.transactions)
         setDepositAmount("")
         setFeedback(`Deposit successful: $${amount.toFixed(2)}`)
       }
@@ -147,13 +117,7 @@ export default function WalletPage() {
 
     try {
       const result = await postWithdraw({ clerkId: clerkUser.id, amount, description: "Wallet withdrawal" })
-      const updatedBalance = result?.wallet?.balance ?? balance - amount
-      updateUser({ balance: updatedBalance })
-      setUserData((prev) =>
-        prev
-          ? { ...prev, wallet: { ...prev.wallet, balance: updatedBalance, transactions: result?.wallet?.transactions || prev.wallet?.transactions } }
-          : prev
-      )
+      setBalance("real", result?.wallet?.balance ?? balance - amount, result?.wallet?.transactions)
       setWithdrawAmount("")
       setFeedback(`Withdrawal successful: $${amount.toFixed(2)}`)
     } catch (err) {
@@ -175,11 +139,9 @@ export default function WalletPage() {
       setError("")
       setFeedback("")
       const result = await postSetDemoBalance({ clerkId: clerkUser.id, amount, description: "Demo balance set by user" })
-      const updatedBalance = result?.balance ?? amount
-      setUserData((prev) => (prev ? { ...prev, wallet: { ...prev.wallet, balance: updatedBalance } } : prev))
-      updateUser({ balance: updatedBalance })
+      setBalance("demo", result?.balance ?? amount, result?.wallet?.transactions)
       setDemoSetAmount("")
-      setFeedback(`Demo balance set to $${updatedBalance.toFixed(2)}`)
+      setFeedback(`Demo balance set to $${(result?.balance ?? amount).toFixed(2)}`)
     } catch (err) {
       setError(err.message || "Could not update demo balance")
     } finally {
@@ -194,9 +156,7 @@ export default function WalletPage() {
       setError("")
       setFeedback("")
       const result = await postSetDemoBalance({ clerkId: clerkUser.id, amount: 10000, description: "Demo balance reset" })
-      const updatedBalance = result?.balance ?? 10000
-      setUserData((prev) => (prev ? { ...prev, wallet: { ...prev.wallet, balance: updatedBalance } } : prev))
-      updateUser({ balance: updatedBalance })
+      setBalance("demo", result?.balance ?? 10000, result?.wallet?.transactions)
       setFeedback("Demo balance reset to $10,000")
     } catch (err) {
       setError(err.message || "Could not reset demo balance")
@@ -228,87 +188,82 @@ export default function WalletPage() {
         </div>
       )}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-2">
+      <div className="mb-4 grid gap-4 md:grid-cols-2">
         <StatCard label="Total balance" value={`$${balance.toLocaleString()}`} description={accountType === "demo" ? "Demo balance" : "Real account"} icon={Wallet} />
         <StatCard label="Available" value={`$${balance.toLocaleString()}`} description="Ready to invest" icon={BadgeDollarSign} accent="text-emerald-600 dark:text-emerald-400" />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-primary/25 bg-primary/[0.04] shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="rounded-full bg-primary/20 p-2">
-                <ArrowUpRight className="h-4 w-4 text-primary" />
-              </div>
-              Deposit funds
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+      <Card className="border-border shadow-sm">
+        <CardContent className="grid gap-4 p-4 sm:grid-cols-2 sm:divide-x sm:divide-border">
+          <div className="space-y-2 sm:pr-5">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
+              Deposit
+            </div>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input type="number" placeholder="0.00" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className="h-9 pl-7" min="0" step="0.01" />
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                <Input type="number" placeholder="0.00" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className="h-8 pl-6 text-sm" min="0" step="0.01" />
               </div>
-              <Button type="button" size="sm" className="h-9" onClick={handleDeposit} disabled={!depositAmount || Number.parseFloat(depositAmount) <= 0 || loading}>
-                {loading ? "Processing..." : "Deposit"}
+              <Button size="sm" className="h-8" onClick={handleDeposit} disabled={!depositAmount || Number.parseFloat(depositAmount) <= 0 || loading}>
+                {loading ? "..." : "Add"}
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {[100, 500, 1000, 5000].map((amount) => (
-                <Button key={amount} variant="outline" size="sm" onClick={() => setDepositAmount(amount.toString())} className="h-8 flex-1 text-xs">
+                <button
+                  key={amount}
+                  type="button"
+                  onClick={() => setDepositAmount(amount.toString())}
+                  className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
                   ${amount}
-                </Button>
+                </button>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="border-destructive/25 bg-destructive/[0.04] shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="rounded-full bg-destructive/20 p-2">
-                <ArrowDownRight className="h-4 w-4 text-destructive" />
-              </div>
-              Withdraw funds
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+          <div className="space-y-2 sm:pl-5">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <ArrowDownRight className="h-3.5 w-3.5 text-muted-foreground" />
+              Withdraw
+            </div>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input type="number" placeholder="0.00" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="h-9 pl-7" min="0" step="0.01" max={balance} />
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                <Input type="number" placeholder="0.00" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="h-8 pl-6 text-sm" min="0" step="0.01" max={balance} />
               </div>
               <Button
                 size="sm"
-                variant="destructive"
-                className="h-9"
+                variant="outline"
+                className="h-8"
                 onClick={handleWithdraw}
                 disabled={loading || accountType === "demo" || !withdrawAmount || Number.parseFloat(withdrawAmount) <= 0 || Number.parseFloat(withdrawAmount) > balance}
               >
-                Withdraw
+                Send
               </Button>
             </div>
-            {accountType === "demo" && <p className="text-xs text-muted-foreground">Switch to your real account to withdraw funds.</p>}
-          </CardContent>
-        </Card>
-      </div>
+            {accountType === "demo" && <p className="text-[11px] text-muted-foreground">Switch to your real account to withdraw funds.</p>}
+          </div>
+        </CardContent>
+      </Card>
 
       {accountType === "demo" && (
-        <Card className="mt-4 border-primary/25 bg-primary/[0.04] shadow-sm">
+        <Card className="mt-4 border-border shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Set demo balance</CardTitle>
+            <CardTitle className="text-sm font-medium">Set demo balance</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 pt-0">
             <div className="flex flex-wrap gap-2">
-              <div className="relative min-w-[180px] flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                <Input type="number" placeholder="10000" value={demoSetAmount} onChange={(e) => setDemoSetAmount(e.target.value)} className="h-9 pl-7" min="0" step="0.01" />
+              <div className="relative min-w-[160px] flex-1">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                <Input type="number" placeholder="10000" value={demoSetAmount} onChange={(e) => setDemoSetAmount(e.target.value)} className="h-8 pl-6 text-sm" min="0" step="0.01" />
               </div>
-              <Button type="button" size="sm" className="h-9" onClick={handleSetDemoBalance} disabled={!demoSetAmount || Number.parseFloat(demoSetAmount) < 0 || loading}>
+              <Button type="button" size="sm" className="h-8" onClick={handleSetDemoBalance} disabled={!demoSetAmount || Number.parseFloat(demoSetAmount) < 0 || loading}>
                 {loading ? "Saving..." : "Set balance"}
               </Button>
-              <Button type="button" size="sm" variant="outline" className="h-9" onClick={handleResetDemoBalance} disabled={loading}>
-                <RotateCcw className="mr-2 h-4 w-4" />
+              <Button type="button" size="sm" variant="outline" className="h-8" onClick={handleResetDemoBalance} disabled={loading}>
+                <RotateCcw className="h-3.5 w-3.5" />
                 Reset to $10,000
               </Button>
             </div>

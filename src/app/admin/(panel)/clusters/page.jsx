@@ -148,6 +148,11 @@ export default function AdminClustersPage() {
                     <TableCell className="text-sm text-foreground">{formatCurrency(metrics.netLiquidity)}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
+                        <Link href={`/admin/clusters/${cluster._id}`}>
+                          <Button variant="outline" size="sm">
+                            Activity
+                          </Button>
+                        </Link>
                         <Link href={`/market/${cluster._id}`}>
                           <Button variant="outline" size="sm">
                             View

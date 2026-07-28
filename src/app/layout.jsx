@@ -1,6 +1,7 @@
 import { Inter, Lexend } from 'next/font/google'
 import clsx from 'clsx'
 import { AuthProvider } from '@/lib/auth-context'
+import { WalletProvider } from '@/lib/wallet-context'
 
 import '@/styles/tailwind.css'
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignOutButton, UserButton } from '@clerk/nextjs'
@@ -44,7 +45,9 @@ export default function RootLayout({ children }) {
         <SignedIn>
           <UserButton/>
         </SignedIn> */}
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <WalletProvider>{children}</WalletProvider>
+        </AuthProvider>
         </body>
     </html>
     </ClerkProvider>

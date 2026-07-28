@@ -8,7 +8,8 @@ import { StatCard } from "@/components/stat-card"
 import { EmptyState } from "@/components/empty-state"
 import { TrendChart } from "@/components/chart"
 import { useUser } from "@clerk/nextjs"
-import { fetchAccount, fetchClusters } from "@/lib/api-client"
+import { useWallet } from "@/lib/wallet-context"
+import { fetchClusters } from "@/lib/api-client"
 import { calculateClusterMetrics } from "@/lib/cluster-utils"
 import {
   Activity,
@@ -19,6 +20,7 @@ import {
   Clock3,
   History,
   Layers3,
+  LineChart,
   Sparkles,
   TrendingUp,
   UserRound,
@@ -34,6 +36,7 @@ const fallbackClusters = [
 const quickActions = [
   { href: "/wallet", label: "Wallet", description: "Manage real and demo balances", icon: Wallet },
   { href: "/market", label: "Market", description: "Browse available clusters", icon: Layers3 },
+  { href: "/portfolio", label: "Portfolio", description: "See your positions and PnL", icon: LineChart },
   { href: "/transactions", label: "Activity", description: "See your account history", icon: History },
   { href: "/profile", label: "Profile", description: "Manage your personal info", icon: UserRound },
 ]
@@ -62,46 +65,11 @@ function normalizeCluster(cluster, index) {
 }
 
 export default function DashboardPage() {
-  const { user: clerkUser, isSignedIn } = useUser()
-  const [userData, setUserData] = useState(null)
-  const [clusters, setClusters] = useState([])
-  const [accountLoading, setAccountLoading] = useState(true)
-  const [clustersLoading, setClustersLoading] = useState(true)
+  const { isSignedIn } = useUser()
   const { user } = useAuth()
-
-  useEffect(() => {
-    if (!clerkUser?.id || !isSignedIn) return
-    let isActive = true
-
-    async function fetchUser() {
-      try {
-        setAccountLoading(true)
-        const data = await fetchAccount(clerkUser.id, "real")
-        if (isActive) {
-          setUserData({
-            ...data,
-            username: data?.username || data?.name || clerkUser?.fullName || "User",
-            wallet: {
-              ...(data?.wallet || {}),
-              balance: Number(data?.wallet?.balance ?? data?.balance ?? data?.account?.balance ?? 0),
-            },
-          })
-        }
-      } catch (err) {
-        console.error(err)
-        if (isActive) {
-          setUserData({ username: clerkUser?.fullName || "User", wallet: { balance: 0, transactions: [] } })
-        }
-      } finally {
-        if (isActive) setAccountLoading(false)
-      }
-    }
-
-    fetchUser()
-    return () => {
-      isActive = false
-    }
-  }, [clerkUser?.id, clerkUser?.fullName, isSignedIn])
+  const { real, demo, loading: walletLoading } = useWallet()
+  const [clusters, setClusters] = useState([])
+  const [clustersLoading, setClustersLoading] = useState(true)
 
   useEffect(() => {
     let isActive = true
@@ -128,7 +96,7 @@ export default function DashboardPage() {
 
   if (!user) return null
   if (!isSignedIn) return <p>Please log in</p>
-  if (accountLoading || clustersLoading) {
+  if (walletLoading || clustersLoading) {
     return (
       <div className="bgmain p-6 lg:p-8">
         <div className="mx-auto max-w-7xl space-y-6">
@@ -146,13 +114,12 @@ export default function DashboardPage() {
       </div>
     )
   }
-  if (!userData) return <p>User not found</p>
 
-  const realBalance = Number(userData?.accounts?.real?.balance ?? userData?.wallet?.balance ?? 0)
-  const demoBalance = Number(userData?.accounts?.demo?.balance ?? 10000)
+  const realBalance = real.balance
+  const demoBalance = demo.balance
   const totalBalance = realBalance + demoBalance
-  const availableFunds = Math.round(totalBalance * 0.7)
-  const invested = totalBalance - availableFunds
+  const availableFunds = Math.round(realBalance * 0.7)
+  const invested = realBalance - availableFunds
 
   const accountCards = [
     { title: "Real account", value: `$${realBalance.toLocaleString()}`, subtitle: "Live funds", icon: Banknote, accent: "text-primary", badge: "Live" },
@@ -173,13 +140,7 @@ export default function DashboardPage() {
       }))
     : fallbackClusters
 
-  const transactions = Array.isArray(userData?.account?.transactions)
-    ? userData.account.transactions
-    : Array.isArray(userData?.wallet?.transactions)
-      ? userData.wallet.transactions
-      : []
-
-  const recentTransactions = [...transactions]
+  const recentTransactions = [...real.transactions]
     .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
     .slice(0, 5)
 

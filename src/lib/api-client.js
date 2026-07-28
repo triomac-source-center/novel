@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://novel-server-cdcp.onrender.com"
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://novel-server-cdcp.onrender.com"
 
 async function requestJson(url, options = {}) {
   try {
@@ -137,4 +137,10 @@ export async function markNotificationRead(notificationId) {
 
 export async function markAllNotificationsRead(clerkId) {
   return postJson(`${API_BASE_URL}/api/notifications/read-all`, { clerkId })
+}
+
+export async function fetchUsersByClerkIds(clerkIds) {
+  const ids = Array.from(new Set((clerkIds || []).filter(Boolean)))
+  if (ids.length === 0) return { success: true, data: [] }
+  return requestJson(`${API_BASE_URL}/api/users/lookup?clerkIds=${encodeURIComponent(ids.join(","))}`)
 }

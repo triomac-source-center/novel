@@ -2,38 +2,34 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { History, LayoutDashboard, Layers3, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
+import { History, LayoutDashboard, Layers3, LineChart, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { hasAdminAccess } from "@/lib/admin"
+import { useWallet } from "@/lib/wallet-context"
 import { useEffect, useState } from "react"
 
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Cluster market", href: "/market", icon: Layers3 },
+  { name: "Portfolio", href: "/portfolio", icon: LineChart },
   { name: "Wallet", href: "/wallet", icon: Wallet },
   { name: "Activity", href: "/transactions", icon: History },
   { name: "Profile", href: "/profile", icon: UserRound },
 ]
 
-export function Sidebar({ wallet }) {
+export function Sidebar() {
   const pathname = usePathname()
+  const { real } = useWallet()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [balance, setBalance] = useState(Number(wallet?.balance || 0))
   const [showAdminLink, setShowAdminLink] = useState(false)
 
-  useEffect(() => setBalance(Number(wallet?.balance || 0)), [wallet?.balance])
-  useEffect(() => {
-    const onUpdate = (event) => setBalance(Number(event?.detail?.balance ?? wallet?.balance ?? 0))
-    window.addEventListener("wallet-balance-updated", onUpdate)
-    return () => window.removeEventListener("wallet-balance-updated", onUpdate)
-  }, [wallet?.balance])
   useEffect(() => setShowAdminLink(hasAdminAccess()), [pathname])
 
   const sidebar = (
     <aside className="flex h-full flex-col border-r border-border bg-card">
       <div className="border-b border-border px-5 py-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Capital available</p>
-        <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">${balance.toLocaleString()}</p>
+        <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">${real.balance.toLocaleString()}</p>
         <Link
           href="/wallet"
           className="mt-4 flex items-center justify-between rounded-xl border border-primary/20 bg-primary/[0.06] px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/10"

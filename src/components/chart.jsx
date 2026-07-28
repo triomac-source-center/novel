@@ -3,7 +3,7 @@
 import { useId } from "react"
 import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from "recharts"
 
-export function TrendChart({ data, dataKey = "value", color = "#6366f1", height = 96, formatValue }) {
+export function TrendChart({ data, dataKey = "value", color = "#3291ff", height = 96, formatValue }) {
   const gradientId = useId()
   const format = formatValue || ((value) => `$${Number(value).toLocaleString()}`)
 

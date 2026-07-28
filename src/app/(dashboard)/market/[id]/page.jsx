@@ -12,12 +12,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EmptyState } from "@/components/empty-state"
 import { ArrowLeft, Share2, Users } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
-import { fetchClusterById, investInCluster } from "@/lib/api-client"
+import { fetchClusterById, fetchUsersByClerkIds, investInCluster } from "@/lib/api-client"
+import { useWallet } from "@/lib/wallet-context"
 
 const STATUS_META = {
   offline: { label: "Draft", variant: "outline" },
   online: { label: "Open", variant: "secondary" },
   closed: { label: "Closed", variant: "outline" },
+}
+
+function displayName(clerkId, usersById) {
+  const user = usersById[clerkId]
+  if (!user) return clerkId
+  if (user.username) return user.username
+  if (user.firstName || user.lastName) return [user.firstName, user.lastName].filter(Boolean).join(" ")
+  return clerkId
 }
 
 function normalize(cluster) {
@@ -36,9 +45,11 @@ export default function ClusterPage() {
   const params = useParams()
   const router = useRouter()
   const { user: clerkUser, isSignedIn } = useUser()
+  const { setBalance } = useWallet()
   const id = params?.id
 
   const [cluster, setCluster] = useState(null)
+  const [usersById, setUsersById] = useState({})
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [cells, setCells] = useState("1")
@@ -69,6 +80,29 @@ export default function ClusterPage() {
       isActive = false
     }
   }, [id])
+
+  useEffect(() => {
+    if (!cluster?.holders?.length) return
+    let isActive = true
+
+    async function loadUsers() {
+      try {
+        const clerkIds = cluster.holders.map((holder) => holder.clerkId)
+        const result = await fetchUsersByClerkIds(clerkIds)
+        if (!isActive) return
+        const map = {}
+        for (const user of result?.data || []) map[user.clerkId] = user
+        setUsersById(map)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+
+    loadUsers()
+    return () => {
+      isActive = false
+    }
+  }, [cluster?.holders])
 
   if (loading) {
     return (
@@ -114,13 +148,22 @@ export default function ClusterPage() {
       setCluster(normalize(result.data))
       setCells("1")
       setFeedback(`Invested ${formatCurrency(parsedCells * metrics.currentCellPrice)} in layer ${metrics.currentLayer}.`)
-      window.dispatchEvent(new CustomEvent("wallet-balance-updated", { detail: { balance: result?.wallet?.balance } }))
+      if (result?.wallet?.balance !== undefined) setBalance("real", result.wallet.balance)
     } catch (err) {
       setError(err.message || "Investment failed")
     } finally {
       setInvesting(false)
     }
   }
+
+  const summaryTiles = [
+    { label: "Entry per cell", value: formatCurrency(metrics.currentCellPrice), accent: "text-primary" },
+    { label: "Cells remaining", value: metrics.remainingCells, accent: "text-foreground" },
+    { label: "Gross liquidity", value: formatCurrency(metrics.brutLiquidity), accent: "text-foreground" },
+    { label: "System share (16%)", value: formatCurrency(metrics.systemShare), accent: "text-foreground" },
+    { label: "Net liquidity", value: formatCurrency(metrics.netLiquidity), accent: "text-foreground" },
+    { label: "Progress", value: `${metrics.progress.toFixed(0)}%`, accent: "text-foreground" },
+  ]
 
   return (
     <div className="bgmain p-6 lg:p-8">
@@ -133,6 +176,9 @@ export default function ClusterPage() {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">{cluster.name}</h1>
               <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+              <Badge variant="outline" className="border-primary/30 text-primary">
+                Layer {metrics.currentLayer} / {metrics.maxLayers}
+              </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{cluster.symbol} • created by {cluster.creator ?? "triomac60"}</p>
           </div>
@@ -159,14 +205,14 @@ export default function ClusterPage() {
               <CardTitle>Cluster cells</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-10 gap-1.5 sm:grid-cols-12">
+              <div className="grid grid-cols-[repeat(12,minmax(0,1fr))] gap-1 sm:grid-cols-[repeat(18,minmax(0,1fr))]">
                 {Array.from({ length: cluster.cellCount }).map((_, i) => {
                   const filled = i < cluster.filledCells
                   return (
                     <div
                       key={i}
                       title={filled ? "Filled by an investor" : "Empty cell"}
-                      className={`aspect-square rounded-md border ${filled ? "border-primary bg-primary/70" : "border-border bg-muted/40"}`}
+                      className={`aspect-square rounded-sm border ${filled ? "border-primary bg-primary/70" : "border-border bg-muted/40"}`}
                     />
                   )
                 })}
@@ -199,7 +245,7 @@ export default function ClusterPage() {
                     <TableBody>
                       {cluster.holders.map((holder, index) => (
                         <TableRow key={index}>
-                          <TableCell className="text-muted-foreground">{holder.clerkId}</TableCell>
+                          <TableCell className="text-foreground">{displayName(holder.clerkId, usersById)}</TableCell>
                           <TableCell className="text-right text-foreground">{holder.cells}</TableCell>
                           <TableCell className="text-right font-medium text-foreground">{formatCurrency(holder.amount)}</TableCell>
                         </TableRow>
@@ -220,53 +266,35 @@ export default function ClusterPage() {
               <CardTitle>Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Active layer</span>
-                  <span className="font-semibold text-primary">{metrics.currentLayer} / {metrics.maxLayers}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Entry per cell</span>
-                  <span className="font-semibold text-primary">{formatCurrency(metrics.currentCellPrice)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Gross liquidity</span>
-                  <span className="font-semibold text-foreground">{formatCurrency(metrics.brutLiquidity)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">System share (16%)</span>
-                  <span className="font-semibold text-foreground">{formatCurrency(metrics.systemShare)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Net liquidity</span>
-                  <span className="font-semibold text-foreground">{formatCurrency(metrics.netLiquidity)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Cells remaining</span>
-                  <span className="font-semibold text-foreground">{metrics.remainingCells}</span>
-                </div>
-
-                {!canInvest && (
-                  <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                    {status === "offline" ? "This cluster hasn't been published yet." : "This cluster is closed to new investment."}
-                  </p>
-                )}
-
-                <div className="space-y-2 pt-2">
-                  <Input type="number" min="1" step="1" max={metrics.remainingCells} value={cells} onChange={(e) => setCells(e.target.value)} disabled={!canInvest} placeholder="Number of cells" />
-                  <p className="text-xs text-muted-foreground">Total: {formatCurrency((Number(cells) || 0) * metrics.currentCellPrice)}</p>
-                  <Button className="w-full" onClick={handleInvest} disabled={investing || !canInvest}>
-                    {!canInvest ? statusMeta.label : investing ? "Investing..." : "Fund this cluster"}
-                  </Button>
-                </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-                {feedback && <p className="text-sm text-primary">{feedback}</p>}
+              <div className="grid grid-cols-2 gap-2">
+                {summaryTiles.map((tile) => (
+                  <div key={tile.label} className="rounded-lg border border-border bg-muted/30 p-2.5">
+                    <p className="text-[11px] text-muted-foreground">{tile.label}</p>
+                    <p className={`text-sm font-semibold ${tile.accent}`}>{tile.value}</p>
+                  </div>
+                ))}
               </div>
+
+              {!canInvest && (
+                <p className="mt-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                  {status === "offline" ? "This cluster hasn't been published yet." : "This cluster is closed to new investment."}
+                </p>
+              )}
+
+              <div className="mt-3 space-y-2">
+                <Input type="number" min="1" step="1" max={metrics.remainingCells} value={cells} onChange={(e) => setCells(e.target.value)} disabled={!canInvest} placeholder="Number of cells" />
+                <p className="text-xs text-muted-foreground">Total: {formatCurrency((Number(cells) || 0) * metrics.currentCellPrice)}</p>
+                <Button className="w-full" onClick={handleInvest} disabled={investing || !canInvest}>
+                  {!canInvest ? statusMeta.label : investing ? "Investing..." : "Fund this cluster"}
+                </Button>
+              </div>
+              {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+              {feedback && <p className="mt-2 text-sm text-primary">{feedback}</p>}
             </CardContent>
           </Card>
 
-          <Link href="/transactions">
-            <Button variant="outline" className="w-full">View transactions</Button>
+          <Link href="/portfolio">
+            <Button variant="outline" className="w-full">View portfolio</Button>
           </Link>
         </div>
       </div>
