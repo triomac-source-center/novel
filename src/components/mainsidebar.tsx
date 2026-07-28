@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { History, LayoutDashboard, Layers3, LineChart, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
+import { CandlestickChart, History, LayoutDashboard, Layers3, LineChart, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { hasAdminAccess } from "@/lib/admin"
 import { useWallet } from "@/lib/wallet-context"
@@ -11,6 +11,7 @@ import { useEffect, useState } from "react"
 const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Cluster market", href: "/market", icon: Layers3 },
+  { name: "Trade", href: "/trade", icon: CandlestickChart },
   { name: "Portfolio", href: "/portfolio", icon: LineChart },
   { name: "Wallet", href: "/wallet", icon: Wallet },
   { name: "Activity", href: "/transactions", icon: History },
