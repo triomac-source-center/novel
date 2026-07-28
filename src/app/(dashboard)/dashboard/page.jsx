@@ -27,12 +27,6 @@ import {
   Wallet,
 } from "lucide-react"
 
-const fallbackClusters = [
-  { id: "cluster-alpha", name: "Triomac 60", progress: 78, invested: 12800, target: 20000, status: "Open", symbol: "TRI-01" },
-  { id: "cluster-beta", name: "Alpha Cell", progress: 54, invested: 8400, target: 16000, status: "Open", symbol: "TRI-02" },
-  { id: "cluster-gamma", name: "Momentum X", progress: 92, invested: 15400, target: 18000, status: "Closing", symbol: "TRI-03" },
-]
-
 const quickActions = [
   { href: "/wallet", label: "Wallet", description: "Manage real and demo balances", icon: Wallet },
   { href: "/market", label: "Market", description: "Browse available clusters", icon: Layers3 },
@@ -128,17 +122,15 @@ export default function DashboardPage() {
     { title: "Invested", value: `$${invested.toLocaleString()}`, subtitle: "In clusters", icon: Layers3, accent: "text-blue-600 dark:text-blue-400", badge: "Active" },
   ]
 
-  const displayClusters = clusters.length
-    ? clusters.slice(0, 3).map((cluster) => ({
-        id: cluster.id,
-        name: cluster.name,
-        progress: Math.round(cluster.metrics?.progress ?? 0),
-        invested: cluster.metrics?.filledValue ?? 0,
-        target: cluster.metrics?.brutLiquidity ?? 0,
-        status: cluster.status,
-        symbol: cluster.symbol,
-      }))
-    : fallbackClusters
+  const displayClusters = clusters.slice(0, 3).map((cluster) => ({
+    id: cluster.id,
+    name: cluster.name,
+    progress: Math.round(cluster.metrics?.progress ?? 0),
+    invested: cluster.metrics?.filledValue ?? 0,
+    target: cluster.metrics?.brutLiquidity ?? 0,
+    status: cluster.status,
+    symbol: cluster.symbol,
+  }))
 
   const recentTransactions = [...real.transactions]
     .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
@@ -199,28 +191,32 @@ export default function DashboardPage() {
             <CardDescription>Open clusters and current progress</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {displayClusters.map((cluster) => (
-              <Link
-                key={cluster.id ?? cluster.name}
-                href={`/market/${cluster.id}`}
-                className="block rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:border-primary/40 hover:bg-accent"
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">{cluster.name}</p>
-                    <p className="text-xs text-muted-foreground">{cluster.symbol} • {cluster.status}</p>
+            {displayClusters.length === 0 ? (
+              <EmptyState icon={Layers3} title="No clusters yet" description="Published clusters will show up here." />
+            ) : (
+              displayClusters.map((cluster) => (
+                <Link
+                  key={cluster.id ?? cluster.name}
+                  href={`/market/${cluster.id}`}
+                  className="block rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:border-primary/40 hover:bg-accent"
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">{cluster.name}</p>
+                      <p className="text-xs text-muted-foreground">{cluster.symbol} • {cluster.status}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-primary">${cluster.invested.toLocaleString()}</span>
                   </div>
-                  <span className="text-sm font-semibold text-primary">${cluster.invested.toLocaleString()}</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div className="h-2 rounded-full bg-primary" style={{ width: `${cluster.progress}%` }} />
-                </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{cluster.progress}% filled</span>
-                  <span>Target: ${cluster.target.toLocaleString()}</span>
-                </div>
-              </Link>
-            ))}
+                  <div className="h-2 rounded-full bg-muted">
+                    <div className="h-2 rounded-full bg-primary" style={{ width: `${cluster.progress}%` }} />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{cluster.progress}% filled</span>
+                    <span>Target: ${cluster.target.toLocaleString()}</span>
+                  </div>
+                </Link>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

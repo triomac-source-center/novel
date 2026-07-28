@@ -24,12 +24,6 @@ const CLUSTER_COLORS = [
   { bg: "bg-cyan-500/15", text: "text-cyan-400" },
 ]
 
-const demoClusters = [
-  { id: "cluster-alpha", symbol: "TRI-01", name: "Alpha Cluster", cellCount: 10, cellValue: 1000, currentLayer: 1, maxLayers: 4, layerStep: 100, filledCells: 4, creator: "triomac60", description: "Early-stage growth cluster with strong momentum." },
-  { id: "cluster-beta", symbol: "TRI-02", name: "Beta Cluster", cellCount: 8, cellValue: 1500, currentLayer: 3, maxLayers: 3, layerStep: 150, filledCells: 8, creator: "triomac60", description: "Fully subscribed and now closed for new investors." },
-  { id: "cluster-gamma", symbol: "TRI-03", name: "Gamma Cluster", cellCount: 12, cellValue: 800, currentLayer: 2, maxLayers: 5, layerStep: 80, filledCells: 7, creator: "triomac60", description: "New cluster opening with attractive room for funding." },
-]
-
 function getClusterId(cluster, index) {
   return cluster.id ?? cluster._id ?? cluster.signature ?? `cluster-${index + 1}`
 }
@@ -59,7 +53,7 @@ export default function MarketPage() {
   const { user: clerkUser, isSignedIn } = useUser()
   const router = useRouter()
   const isAdmin = clerkUser?.publicMetadata?.role === "admin" || clerkUser?.id === process.env.NEXT_PUBLIC_TRIOMAC60_ADMIN_CLERK_ID
-  const [clusters, setClusters] = useState(() => demoClusters.map(normalizeCluster))
+  const [clusters, setClusters] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
 
@@ -80,10 +74,10 @@ export default function MarketPage() {
               .map((cluster, index) => normalizeCluster(cluster, index))
           : []
 
-        if (isActive) setClusters(remoteClusters.length > 0 ? remoteClusters : demoClusters.map(normalizeCluster))
+        if (isActive) setClusters(remoteClusters)
       } catch (err) {
         console.error(err)
-        if (isActive) setClusters(demoClusters.map(normalizeCluster))
+        if (isActive) setClusters([])
       } finally {
         if (isActive) setLoading(false)
       }
@@ -142,7 +136,9 @@ export default function MarketPage() {
         <Input placeholder="Search a cluster" className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       </div>
 
-      {filteredClusters.length === 0 ? (
+      {clusters.length === 0 ? (
+        <EmptyState icon={Layers3} title="No clusters yet" description="Published clusters will show up here." />
+      ) : filteredClusters.length === 0 ? (
         <EmptyState icon={Search} title="No cluster matches your search" description="Try a different name or symbol." />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border">
