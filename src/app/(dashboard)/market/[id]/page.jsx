@@ -14,6 +14,7 @@ import { ArrowLeft, Lock, Share2, Users } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 import { fetchClusterById, fetchUsersByClerkIds, investInCluster } from "@/lib/api-client"
 import { useWallet } from "@/lib/wallet-context"
+import { useToast } from "@/lib/toast-context"
 
 const STATUS_META = {
   offline: { label: "Draft", variant: "outline" },
@@ -46,6 +47,7 @@ export default function ClusterPage() {
   const router = useRouter()
   const { user: clerkUser, isSignedIn } = useUser()
   const { setBalance } = useWallet()
+  const toast = useToast()
   const id = params?.id
 
   const [cluster, setCluster] = useState(null)
@@ -54,8 +56,6 @@ export default function ClusterPage() {
   const [notFound, setNotFound] = useState(false)
   const [cells, setCells] = useState("1")
   const [investing, setInvesting] = useState(false)
-  const [feedback, setFeedback] = useState("")
-  const [error, setError] = useState("")
 
   useEffect(() => {
     if (!id) return
@@ -127,30 +127,28 @@ export default function ClusterPage() {
   async function handleInvest() {
     const parsedCells = Number(cells)
     if (!Number.isInteger(parsedCells) || parsedCells <= 0) {
-      setError("Enter a valid number of cells.")
+      toast.error("Enter a valid number of cells.")
       return
     }
     if (parsedCells > metrics.remainingCells) {
-      setError(`Only ${metrics.remainingCells} cell(s) remaining.`)
+      toast.error(`Only ${metrics.remainingCells} cell(s) remaining.`)
       return
     }
     if (!isSignedIn || !clerkUser?.id) {
-      setError("You must be logged in to invest.")
+      toast.error("You must be logged in to invest.")
       return
     }
 
     setInvesting(true)
-    setError("")
-    setFeedback("")
 
     try {
       const result = await investInCluster(cluster.id, { clerkId: clerkUser.id, cells: parsedCells })
       setCluster(normalize(result.data))
       setCells("1")
-      setFeedback(`Invested ${formatCurrency(parsedCells * metrics.currentCellPrice)} in layer ${metrics.currentLayer}.`)
+      toast.success(`Invested ${formatCurrency(parsedCells * metrics.currentCellPrice)} in layer ${metrics.currentLayer}.`)
       if (result?.wallet?.balance !== undefined) setBalance("real", result.wallet.balance)
     } catch (err) {
-      setError(err.message || "Investment failed")
+      toast.error(err.message || "Investment failed")
     } finally {
       setInvesting(false)
     }
@@ -193,7 +191,7 @@ export default function ClusterPage() {
           onClick={() => {
             if (typeof window !== "undefined") {
               navigator.clipboard?.writeText(window.location.href)
-              setFeedback("Link copied to clipboard.")
+              toast.success("Link copied to clipboard.")
             }
           }}
         >
@@ -313,8 +311,6 @@ export default function ClusterPage() {
                   {!canInvest ? statusMeta.label : investing ? "Investing..." : "Fund this cluster"}
                 </Button>
               </div>
-              {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
-              {feedback && <p className="mt-2 text-sm text-primary">{feedback}</p>}
             </CardContent>
           </Card>
 

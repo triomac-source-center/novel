@@ -16,10 +16,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Layers3, PlusCircle, Radio, XCircle } from "lucide-react"
+import { Layers3, PlusCircle, Radio, Trash2, XCircle } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
-import { fetchClusters, publishCluster, closeCluster } from "@/lib/api-client"
+import { fetchClusters, publishCluster, closeCluster, deleteCluster, deleteAllClusters } from "@/lib/api-client"
 import { getAdminAccessCode } from "@/lib/admin"
+import { useToast } from "@/lib/toast-context"
 
 const STATUS_LABEL = {
   offline: { label: "Draft", variant: "outline" },
@@ -29,11 +30,12 @@ const STATUS_LABEL = {
 
 export default function AdminClustersPage() {
   const { user: clerkUser } = useUser()
+  const toast = useToast()
   const [clusters, setClusters] = useState([])
   const [loading, setLoading] = useState(true)
   const [actionTarget, setActionTarget] = useState(null)
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false)
   const [processing, setProcessing] = useState(false)
-  const [error, setError] = useState("")
 
   const loadClusters = async () => {
     try {
@@ -56,19 +58,39 @@ export default function AdminClustersPage() {
   const handleConfirm = async () => {
     if (!actionTarget || !clerkUser?.id) return
     setProcessing(true)
-    setError("")
 
     try {
       const payload = { clerkId: clerkUser.id, adminCode: getAdminAccessCode() }
       if (actionTarget.type === "publish") {
         await publishCluster(actionTarget.cluster._id, payload)
-      } else {
+        toast.success(`${actionTarget.cluster.name || actionTarget.cluster.symbol} published.`)
+      } else if (actionTarget.type === "close") {
         await closeCluster(actionTarget.cluster._id, payload)
+        toast.success(`${actionTarget.cluster.name || actionTarget.cluster.symbol} closed.`)
+      } else {
+        await deleteCluster(actionTarget.cluster._id, payload)
+        toast.success(`${actionTarget.cluster.name || actionTarget.cluster.symbol} deleted.`)
       }
       setActionTarget(null)
       await loadClusters()
     } catch (err) {
-      setError(err.message || "Action failed")
+      toast.error(err.message || "Action failed")
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleDeleteAll = async () => {
+    if (!clerkUser?.id) return
+    setProcessing(true)
+
+    try {
+      const result = await deleteAllClusters({ clerkId: clerkUser.id, adminCode: getAdminAccessCode() })
+      toast.success(`${result?.deletedCount ?? 0} cluster(s) deleted.`)
+      setDeleteAllOpen(false)
+      await loadClusters()
+    } catch (err) {
+      toast.error(err.message || "Could not delete all clusters")
     } finally {
       setProcessing(false)
     }
@@ -80,14 +102,22 @@ export default function AdminClustersPage() {
         eyebrow="Cluster management"
         icon={Layers3}
         title="All clusters"
-        description="Publish drafts to open them for investment, or close a cluster manually."
+        description="Publish drafts to open them for investment, or close/delete a cluster manually."
         actions={
-          <Link href="/admin/clusters/new">
-            <Button>
-              <PlusCircle className="h-4 w-4" />
-              New cluster
-            </Button>
-          </Link>
+          <>
+            {clusters.length > 0 && (
+              <Button variant="outline" className="text-destructive hover:text-destructive" onClick={() => setDeleteAllOpen(true)}>
+                <Trash2 className="h-4 w-4" />
+                Delete all
+              </Button>
+            )}
+            <Link href="/admin/clusters/new">
+              <Button>
+                <PlusCircle className="h-4 w-4" />
+                New cluster
+              </Button>
+            </Link>
+          </>
         }
       />
 
@@ -175,6 +205,15 @@ export default function AdminClustersPage() {
                             Close
                           </Button>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setActionTarget({ cluster, type: "delete" })}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -189,15 +228,17 @@ export default function AdminClustersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {actionTarget?.type === "publish" ? "Publish this cluster?" : "Close this cluster?"}
+              {actionTarget?.type === "publish" ? "Publish this cluster?" : actionTarget?.type === "close" ? "Close this cluster?" : "Delete this cluster?"}
             </DialogTitle>
             <DialogDescription>
-              {actionTarget?.type === "publish"
-                ? `${actionTarget?.cluster?.name || actionTarget?.cluster?.symbol} will become visible and open for investment on the market.`
-                : `${actionTarget?.cluster?.name || actionTarget?.cluster?.symbol} will be closed immediately, regardless of its current layer progress. This cannot be undone.`}
+              {actionTarget?.type === "publish" &&
+                `${actionTarget?.cluster?.name || actionTarget?.cluster?.symbol} will become visible and open for investment on the market.`}
+              {actionTarget?.type === "close" &&
+                `${actionTarget?.cluster?.name || actionTarget?.cluster?.symbol} will be closed immediately, regardless of its current layer progress. This cannot be undone.`}
+              {actionTarget?.type === "delete" &&
+                `${actionTarget?.cluster?.name || actionTarget?.cluster?.symbol} will be permanently deleted, along with its activity log and holder records. This cannot be undone.`}
             </DialogDescription>
           </DialogHeader>
-          {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button variant="outline" onClick={() => setActionTarget(null)} disabled={processing}>
               Cancel
@@ -205,9 +246,28 @@ export default function AdminClustersPage() {
             <Button
               onClick={handleConfirm}
               disabled={processing}
-              variant={actionTarget?.type === "close" ? "destructive" : "default"}
+              variant={actionTarget?.type === "close" || actionTarget?.type === "delete" ? "destructive" : "default"}
             >
-              {processing ? "Working..." : actionTarget?.type === "publish" ? "Publish" : "Close cluster"}
+              {processing ? "Working..." : actionTarget?.type === "publish" ? "Publish" : actionTarget?.type === "close" ? "Close cluster" : "Delete cluster"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete every cluster?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes all {clusters.length} cluster(s), including their activity logs and holder records. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAllOpen(false)} disabled={processing}>
+              Cancel
+            </Button>
+            <Button onClick={handleDeleteAll} disabled={processing} variant="destructive">
+              {processing ? "Deleting..." : "Delete all clusters"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -15,12 +15,14 @@ import { TrendChart } from "@/components/chart"
 import { ArrowUpRight, ArrowDownRight, Wallet, Sparkles, BadgeDollarSign, RotateCcw, Clock3 } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import { useWallet } from "@/lib/wallet-context"
+import { useToast } from "@/lib/toast-context"
 import { postDeposit, postFundAccount, postSetDemoBalance, postWithdraw } from "@/lib/api-client"
 
 export default function WalletPage() {
   const { user: clerkUser, isSignedIn } = useUser()
   const { user } = useAuth()
   const router = useRouter()
+  const toast = useToast()
   const { real, demo, setBalance } = useWallet()
   const [mounted, setMounted] = useState(false)
   const [accountType, setAccountType] = useState("real")
@@ -28,8 +30,6 @@ export default function WalletPage() {
   const [withdrawAmount, setWithdrawAmount] = useState("")
   const [demoSetAmount, setDemoSetAmount] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [feedback, setFeedback] = useState("")
   const [page, setPage] = useState(1)
   const pageSize = 6
 
@@ -66,28 +66,26 @@ export default function WalletPage() {
   const handleDeposit = async () => {
     const amount = Number(depositAmount)
     if (!depositAmount || Number.isNaN(amount) || amount <= 0) {
-      setError("Please enter a valid deposit amount")
+      toast.error("Please enter a valid deposit amount")
       return
     }
 
     try {
       setLoading(true)
-      setError("")
-      setFeedback("")
 
       if (accountType === "demo") {
         const result = await postFundAccount({ clerkId: clerkUser.id, amount, type: "demo", description: "Demo account funding" })
         setBalance("demo", result?.balance ?? balance + amount, result?.wallet?.transactions)
         setDepositAmount("")
-        setFeedback(`Demo deposit applied: $${amount.toFixed(2)}`)
+        toast.success(`Demo deposit applied: $${amount.toFixed(2)}`)
       } else {
         const result = await postDeposit({ clerkId: clerkUser.id, amount, description: "Wallet deposit" })
         setBalance("real", result?.wallet?.balance ?? balance + amount, result?.wallet?.transactions)
         setDepositAmount("")
-        setFeedback(`Deposit successful: $${amount.toFixed(2)}`)
+        toast.success(`Deposit successful: $${amount.toFixed(2)}`)
       }
     } catch (err) {
-      setError(err.message || "Deposit failed")
+      toast.error(err.message || "Deposit failed")
     } finally {
       setLoading(false)
     }
@@ -96,32 +94,31 @@ export default function WalletPage() {
   const handleWithdraw = async () => {
     const amount = Number.parseFloat(withdrawAmount)
     if (!amount || amount <= 0) {
-      setError("Please enter a valid amount")
+      toast.error("Please enter a valid amount")
       return
     }
     if (amount > balance) {
-      setError("Insufficient funds")
+      toast.error("Insufficient funds")
       return
     }
     if (accountType === "demo") {
-      setError("Withdrawals are only available on the real account.")
+      toast.error("Withdrawals are only available on the real account.")
       return
     }
     if (!clerkUser?.id) {
-      setError("You must be logged in to withdraw funds.")
+      toast.error("You must be logged in to withdraw funds.")
       return
     }
 
     setLoading(true)
-    setError("")
 
     try {
       const result = await postWithdraw({ clerkId: clerkUser.id, amount, description: "Wallet withdrawal" })
       setBalance("real", result?.wallet?.balance ?? balance - amount, result?.wallet?.transactions)
       setWithdrawAmount("")
-      setFeedback(`Withdrawal successful: $${amount.toFixed(2)}`)
+      toast.success(`Withdrawal successful: $${amount.toFixed(2)}`)
     } catch (err) {
-      setError(err.message || "Withdrawal failed")
+      toast.error(err.message || "Withdrawal failed")
     } finally {
       setLoading(false)
     }
@@ -130,20 +127,18 @@ export default function WalletPage() {
   const handleSetDemoBalance = async () => {
     const amount = Number(demoSetAmount)
     if (!demoSetAmount || Number.isNaN(amount) || amount < 0) {
-      setError("Please enter a valid demo balance")
+      toast.error("Please enter a valid demo balance")
       return
     }
 
     try {
       setLoading(true)
-      setError("")
-      setFeedback("")
       const result = await postSetDemoBalance({ clerkId: clerkUser.id, amount, description: "Demo balance set by user" })
       setBalance("demo", result?.balance ?? amount, result?.wallet?.transactions)
       setDemoSetAmount("")
-      setFeedback(`Demo balance set to $${(result?.balance ?? amount).toFixed(2)}`)
+      toast.success(`Demo balance set to $${(result?.balance ?? amount).toFixed(2)}`)
     } catch (err) {
-      setError(err.message || "Could not update demo balance")
+      toast.error(err.message || "Could not update demo balance")
     } finally {
       setLoading(false)
     }
@@ -153,13 +148,11 @@ export default function WalletPage() {
     if (!clerkUser?.id) return
     try {
       setLoading(true)
-      setError("")
-      setFeedback("")
       const result = await postSetDemoBalance({ clerkId: clerkUser.id, amount: 10000, description: "Demo balance reset" })
       setBalance("demo", result?.balance ?? 10000, result?.wallet?.transactions)
-      setFeedback("Demo balance reset to $10,000")
+      toast.success("Demo balance reset to $10,000")
     } catch (err) {
-      setError(err.message || "Could not reset demo balance")
+      toast.error(err.message || "Could not reset demo balance")
     } finally {
       setLoading(false)
     }
@@ -181,12 +174,6 @@ export default function WalletPage() {
           </Tabs>
         }
       />
-
-      {(error || feedback) && (
-        <div className={`mb-4 rounded-md border px-4 py-3 text-sm ${error ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-primary/30 bg-primary/10 text-primary"}`}>
-          {error || feedback}
-        </div>
-      )}
 
       <div className="mb-4 grid gap-4 md:grid-cols-2">
         <StatCard label="Total balance" value={`$${balance.toLocaleString()}`} description={accountType === "demo" ? "Demo balance" : "Real account"} icon={Wallet} />

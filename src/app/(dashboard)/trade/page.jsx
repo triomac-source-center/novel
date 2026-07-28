@@ -13,6 +13,7 @@ import { CandlestickChart, TrendingUp, Wallet } from "lucide-react"
 import { fetchClusters } from "@/lib/api-client"
 import { useWallet } from "@/lib/wallet-context"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
+import { InvestmentHistory } from "@/components/investment-history"
 
 const POLL_INTERVAL_MS = 5000
 
@@ -137,6 +138,14 @@ export default function TradePage() {
   const floatingPnl = livePositions.reduce((sum, position) => sum + position.liveProfit, 0)
   const equity = real.balance + floatingPnl
 
+  // Realized activity (layer transitions, cell payouts) is persisted server-side on the user's
+  // transaction history (category: "investment") — this isn't a client-only computation, it's the
+  // same record shown on /portfolio and in the admin cluster activity log.
+  const investmentTransactions = useMemo(
+    () => real.transactions.filter((tx) => tx.category === "investment").sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+    [real.transactions]
+  )
+
   if (!isSignedIn) return <p>Please log in</p>
 
   if (loading) {
@@ -215,6 +224,10 @@ export default function TradePage() {
           )}
         </CardContent>
       </Card>
+
+      <div className="mt-6">
+        <InvestmentHistory transactions={investmentTransactions} title="Realized activity" />
+      </div>
     </div>
   )
 }

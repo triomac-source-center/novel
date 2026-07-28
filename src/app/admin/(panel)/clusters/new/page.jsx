@@ -12,12 +12,14 @@ import { Layers3 } from "lucide-react"
 import { createCluster } from "@/lib/api-client"
 import { formatCurrency } from "@/lib/cluster-utils"
 import { getAdminAccessCode } from "@/lib/admin"
+import { useToast } from "@/lib/toast-context"
 
 const ALGORITHMS = ["mean-reversion", "momentum", "grid", "scalping", "trend-following"]
 
 export default function AdminNewClusterPage() {
   const { user: clerkUser } = useUser()
   const router = useRouter()
+  const toast = useToast()
 
   const [symbol, setSymbol] = useState("")
   const [name, setName] = useState("")
@@ -28,7 +30,6 @@ export default function AdminNewClusterPage() {
   const [maxLayers, setMaxLayers] = useState("3")
   const [layerStep, setLayerStep] = useState("100")
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState("")
 
   const parsedCellCount = Number(cellCount)
   const parsedCellValue = Number(cellValue)
@@ -38,26 +39,25 @@ export default function AdminNewClusterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError("")
 
     if (!symbol.trim()) {
-      setError("Symbol is required.")
+      toast.error("Symbol is required.")
       return
     }
     if (!Number.isInteger(parsedCellCount) || parsedCellCount <= 0) {
-      setError("Cell count must be a positive whole number.")
+      toast.error("Cell count must be a positive whole number.")
       return
     }
     if (!Number.isFinite(parsedCellValue) || parsedCellValue <= 0) {
-      setError("Cell value must be a positive amount.")
+      toast.error("Cell value must be a positive amount.")
       return
     }
     if (!Number.isInteger(parsedMaxLayers) || parsedMaxLayers <= 0 || !Number.isFinite(parsedLayerStep) || parsedLayerStep < 0) {
-      setError("Layers and layer increment must be valid.")
+      toast.error("Layers and layer increment must be valid.")
       return
     }
     if (!clerkUser?.id) {
-      setError("You must be signed in.")
+      toast.error("You must be signed in.")
       return
     }
 
@@ -77,9 +77,10 @@ export default function AdminNewClusterPage() {
         creator: "triomac60",
       })
 
+      toast.success(`${symbol} created as a draft.`)
       router.push("/admin/clusters")
     } catch (err) {
-      setError(err.message || "Cluster creation failed")
+      toast.error(err.message || "Cluster creation failed")
     } finally {
       setSubmitting(false)
     }
@@ -168,8 +169,6 @@ export default function AdminNewClusterPage() {
                 Layer 1 starts at {formatCurrency(parsedCellValue || 0)}; each completed layer adds {formatCurrency(parsedLayerStep || 0)}.
               </p>
             </div>
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Creating..." : "Create draft cluster"}

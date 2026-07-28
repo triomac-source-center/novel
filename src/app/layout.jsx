@@ -2,6 +2,7 @@ import { Inter, Lexend } from 'next/font/google'
 import clsx from 'clsx'
 import { AuthProvider } from '@/lib/auth-context'
 import { WalletProvider } from '@/lib/wallet-context'
+import { ToastProvider } from '@/lib/toast-context'
 
 import '@/styles/tailwind.css'
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignOutButton, UserButton } from '@clerk/nextjs'
@@ -38,7 +39,7 @@ export default function RootLayout({ children }) {
         lexend.variable,
       )}
     >
-      <body className="flex h-full flex-col">
+      <body className="flex h-full flex-col bg-background text-foreground">
         {/* <SignedOut>
           <SignInButton/>
         </SignedOut>
@@ -46,7 +47,9 @@ export default function RootLayout({ children }) {
           <UserButton/>
         </SignedIn> */}
         <AuthProvider>
-          <WalletProvider>{children}</WalletProvider>
+          <WalletProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </WalletProvider>
         </AuthProvider>
         </body>
     </html>
