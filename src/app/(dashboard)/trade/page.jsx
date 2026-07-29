@@ -78,6 +78,63 @@ function buildPositions(clusters, clerkId) {
   return positions.sort((a, b) => new Date(b.openedAt) - new Date(a.openedAt))
 }
 
+function buildClosedPositions(clusters, clerkId) {
+  if (!clerkId) return []
+  const closed = []
+
+  for (const cluster of clusters) {
+    const activity = Array.isArray(cluster.activityLog) ? cluster.activityLog : []
+
+    // Sold out: another investor bought your cell and you were paid out — a real, persisted event.
+    for (const entry of activity) {
+      if (entry.type !== "transfer" || entry.clerkId !== clerkId) continue
+      const cells = Number(entry.cells || 0) || 1
+      closed.push({
+        key: `${cluster._id}-sold-${entry.createdAt}-${entry.layer}`,
+        clusterId: cluster._id,
+        symbol: cluster.symbol,
+        layer: entry.layer,
+        cells,
+        entryPrice: Number(entry.costBasis || 0) / cells,
+        exitPrice: Number(entry.amount || 0) / cells,
+        gain: Number(entry.amount || 0) - Number(entry.costBasis || 0),
+        closedAt: entry.createdAt,
+        reason: "Sold",
+      })
+    }
+
+    // Matured: the cluster reached its final layer while you still held cells — no further buyer,
+    // no payout, but the position is no longer open either.
+    if (cluster.status === "closed") {
+      const myCells = Array.isArray(cluster.cells) ? cluster.cells.filter((cell) => cell.ownerClerkId === clerkId) : []
+      const byLayer = new Map()
+      for (const cell of myCells) {
+        const layer = Number(cell.acquiredLayer || 1)
+        const bucket = byLayer.get(layer) || { cells: 0, cost: 0 }
+        bucket.cells += 1
+        bucket.cost += Number(cell.acquiredPrice || 0)
+        byLayer.set(layer, bucket)
+      }
+      for (const [layer, bucket] of byLayer) {
+        closed.push({
+          key: `${cluster._id}-matured-${layer}`,
+          clusterId: cluster._id,
+          symbol: cluster.symbol,
+          layer,
+          cells: bucket.cells,
+          entryPrice: bucket.cost / bucket.cells,
+          exitPrice: null,
+          gain: null,
+          closedAt: cluster.closedAt,
+          reason: "Matured",
+        })
+      }
+    }
+  }
+
+  return closed.sort((a, b) => new Date(b.closedAt) - new Date(a.closedAt))
+}
+
 const TICK_INTERVAL_MS = 1000
 const TICK_STEP = 0.01
 
@@ -111,6 +168,7 @@ export default function TradePage() {
   }, [])
 
   const positions = useMemo(() => buildPositions(clusters, clerkUser?.id), [clusters, clerkUser?.id])
+  const closedPositions = useMemo(() => buildClosedPositions(clusters, clerkUser?.id), [clusters, clerkUser?.id])
 
   // Simulated live feed: nudge each open position's price by +/- $0.01 every second so the
   // terminal feels alive between real cluster updates, without touching any real balance data.
@@ -176,6 +234,7 @@ export default function TradePage() {
         <StatCard label="Equity" value={formatCurrency(equity)} icon={Wallet} accent="text-primary" />
       </div>
 
+      <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">Open positions</p>
       <Card className="border-border shadow-sm">
         <CardContent className="p-0">
           {positions.length === 0 ? (
@@ -217,6 +276,56 @@ export default function TradePage() {
                       {formatCurrency(position.liveProfit)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{new Date(position.openedAt).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <p className="mt-6 mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">Closed positions</p>
+      <Card className="border-border shadow-sm">
+        <CardContent className="p-0">
+          {closedPositions.length === 0 ? (
+            <div className="p-6">
+              <EmptyState icon={CandlestickChart} title="No closed positions yet" description="Positions you've sold or that reached a cluster's final layer will show up here." />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Symbol</TableHead>
+                  <TableHead>Layer</TableHead>
+                  <TableHead className="text-right">Volume</TableHead>
+                  <TableHead className="text-right">Open price</TableHead>
+                  <TableHead className="text-right">Close price</TableHead>
+                  <TableHead className="text-right">P/L</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Closed</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {closedPositions.map((position) => (
+                  <TableRow key={position.key}>
+                    <TableCell>
+                      <Link href={`/market/${position.clusterId}`} className="font-medium text-foreground hover:text-primary">
+                        {position.symbol}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{position.layer}</TableCell>
+                    <TableCell className="text-right text-foreground">{position.cells}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{formatCurrency(position.entryPrice)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{position.exitPrice === null ? "—" : formatCurrency(position.exitPrice)}</TableCell>
+                    <TableCell className={`text-right font-semibold ${position.gain === null ? "text-muted-foreground" : position.gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                      {position.gain === null ? "—" : `${position.gain >= 0 ? "+" : ""}${formatCurrency(position.gain)}`}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {position.reason}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{position.closedAt ? new Date(position.closedAt).toLocaleString() : "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

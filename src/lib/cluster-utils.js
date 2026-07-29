@@ -8,7 +8,9 @@ function calculateClusterMetrics({ cellCount, cellValue, filledCells = 0, curren
   const safeLayerStep = Math.max(Number(layerStep) || 0, 0)
   const safeFilledCells = Math.min(Math.max(Number(filledCells) || 0, 0), safeCellCount)
   const currentCellPrice = safeCellValue + (safeLayer - 1) * safeLayerStep
-  const brutLiquidity = safeCellCount * safeCellValue
+  // Gross/system/net liquidity reflect the CURRENT layer's price, not the frozen layer-1 base —
+  // entry per cell rises every layer, so the cluster's total value and the system's cut do too.
+  const brutLiquidity = safeCellCount * currentCellPrice
   const systemShare = brutLiquidity * SYSTEM_SHARE_RATE
   const netLiquidity = brutLiquidity - systemShare
   const remainingCells = Math.max(safeCellCount - safeFilledCells, 0)
