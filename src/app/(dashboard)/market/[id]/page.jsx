@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
+import { mutate as mutateGlobal } from "swr"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -147,6 +148,9 @@ export default function ClusterPage() {
       setCells("1")
       toast.success(`Invested ${formatCurrency(parsedCells * metrics.currentCellPrice)} in layer ${metrics.currentLayer}.`)
       if (result?.wallet?.balance !== undefined) setBalance("real", result.wallet.balance)
+      // Revalidate the shared "clusters" SWR key so Trade/Dashboard/Portfolio/Market pick up this
+      // trade immediately instead of waiting for their own next poll tick.
+      mutateGlobal("clusters")
     } catch (err) {
       toast.error(err.message || "Investment failed")
     } finally {

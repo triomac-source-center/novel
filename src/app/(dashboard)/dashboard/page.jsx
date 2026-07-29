@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
+import useSWR from "swr"
 import { useAuth } from "@/lib/auth-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
@@ -62,31 +63,14 @@ export default function DashboardPage() {
   const { isSignedIn } = useUser()
   const { user } = useAuth()
   const { real, demo, loading: walletLoading } = useWallet()
-  const [clusters, setClusters] = useState([])
-  const [clustersLoading, setClustersLoading] = useState(true)
-
-  useEffect(() => {
-    let isActive = true
-
-    async function loadClusters() {
-      try {
-        setClustersLoading(true)
-        const data = await fetchClusters()
-        const payload = Array.isArray(data?.data) ? data.data.filter((c) => c.status !== "offline") : []
-        if (isActive) setClusters(payload.map((cluster, index) => normalizeCluster(cluster, index)))
-      } catch (err) {
-        console.error(err)
-        if (isActive) setClusters([])
-      } finally {
-        if (isActive) setClustersLoading(false)
-      }
-    }
-
-    loadClusters()
-    return () => {
-      isActive = false
-    }
-  }, [])
+  // Same "clusters" SWR key as the Trade page and market/[id]'s invest handler: a trade made on
+  // the cluster detail page calls the global mutate("clusters") right after it succeeds, so this
+  // picks it up immediately instead of waiting for the next poll tick.
+  const { data, isLoading: clustersLoading } = useSWR("clusters", fetchClusters, { refreshInterval: 7000 })
+  const clusters = useMemo(() => {
+    const payload = Array.isArray(data?.data) ? data.data.filter((c) => c.status !== "offline") : []
+    return payload.map((cluster, index) => normalizeCluster(cluster, index))
+  }, [data])
 
   if (!user) return null
   if (!isSignedIn) return <p>Please log in</p>

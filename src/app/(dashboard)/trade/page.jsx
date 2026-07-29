@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import useSWR from "swr"
 import { useUser } from "@clerk/nextjs"
 import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
@@ -152,31 +153,13 @@ function pnlColorClass(percent) {
 export default function TradePage() {
   const { user: clerkUser, isSignedIn } = useUser()
   const { real } = useWallet()
-  const [clusters, setClusters] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Shared "clusters" key: market/[id]'s invest handler calls the SWR global mutate("clusters")
+  // right after a successful trade, so this revalidates immediately instead of waiting up to 5s
+  // for the next poll — same key is used on the dashboard for the same reason.
+  const { data, isLoading } = useSWR("clusters", fetchClusters, { refreshInterval: POLL_INTERVAL_MS })
+  const clusters = useMemo(() => (Array.isArray(data?.data) ? data.data : []), [data])
+  const loading = isLoading && clusters.length === 0
   const [ticks, setTicks] = useState({})
-
-  useEffect(() => {
-    let isActive = true
-
-    async function load() {
-      try {
-        const data = await fetchClusters()
-        if (isActive) setClusters(Array.isArray(data?.data) ? data.data : [])
-      } catch (err) {
-        console.error(err)
-      } finally {
-        if (isActive) setLoading(false)
-      }
-    }
-
-    load()
-    const interval = setInterval(load, POLL_INTERVAL_MS)
-    return () => {
-      isActive = false
-      clearInterval(interval)
-    }
-  }, [])
 
   const positions = useMemo(() => buildPositions(clusters, clerkUser?.id), [clusters, clerkUser?.id])
   const closedPositions = useMemo(() => buildClosedPositions(clusters, clerkUser?.id), [clusters, clerkUser?.id])
