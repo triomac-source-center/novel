@@ -7,12 +7,42 @@ import { StatCard } from "@/components/stat-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CircleDollarSign, FileClock, Layers3, PlusCircle, Radio, XCircle } from "lucide-react"
+import { Activity, CalendarDays, CalendarRange, CircleDollarSign, FileClock, Layers3, PlusCircle, Radio, XCircle } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 import { fetchClusters } from "@/lib/api-client"
 
 function normalizeStatus(cluster) {
   return cluster.status ?? "offline"
+}
+
+// Total volume of money moved through the system across every cluster: each "invest" activity
+// entry already records the buyer's full payment for that purchase (fresh cells or bought-out
+// transfers alike), so summing just that type avoids double-counting the "transfer" payout side
+// of the same transaction.
+function computeCirculatingTotals(clusters) {
+  const now = new Date()
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const startOfYear = new Date(now.getFullYear(), 0, 1)
+
+  let daily = 0
+  let monthly = 0
+  let yearly = 0
+  let allTime = 0
+
+  for (const cluster of clusters) {
+    for (const entry of cluster.activityLog || []) {
+      if (entry.type !== "invest") continue
+      const amount = Number(entry.amount || 0)
+      const date = new Date(entry.createdAt)
+      allTime += amount
+      if (date >= startOfYear) yearly += amount
+      if (date >= startOfMonth) monthly += amount
+      if (date >= startOfDay) daily += amount
+    }
+  }
+
+  return { daily, monthly, yearly, allTime }
 }
 
 export default function AdminOverviewPage() {
@@ -67,6 +97,7 @@ export default function AdminOverviewPage() {
   }, 0)
 
   const recentDrafts = drafts.slice(0, 5)
+  const circulating = computeCirculatingTotals(clusters)
 
   return (
     <div>
@@ -90,6 +121,14 @@ export default function AdminOverviewPage() {
         <StatCard label="Drafts" value={drafts.length} icon={FileClock} accent="text-amber-600 dark:text-amber-400" description="Not yet published" />
         <StatCard label="Live" value={online.length} icon={Radio} accent="text-emerald-600 dark:text-emerald-400" description="Open for investment" />
         <StatCard label="Closed" value={closed.length} icon={XCircle} accent="text-muted-foreground" />
+      </div>
+
+      <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">Money circulating · all clusters combined</p>
+      <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Today" value={formatCurrency(circulating.daily)} icon={Activity} accent="text-primary" />
+        <StatCard label="This month" value={formatCurrency(circulating.monthly)} icon={CalendarDays} accent="text-blue-600 dark:text-blue-400" />
+        <StatCard label="This year" value={formatCurrency(circulating.yearly)} icon={CalendarRange} accent="text-emerald-600 dark:text-emerald-400" />
+        <StatCard label="All time" value={formatCurrency(circulating.allTime)} icon={CircleDollarSign} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
