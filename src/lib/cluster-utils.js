@@ -23,7 +23,9 @@ function calculateClusterMetrics({ cellCount, cellValue, filledCells = 0, curren
 }
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(value) || 0)
+  // Cluster prices/liquidity move in cents (layer step increments, per-cell fractions), so always
+  // show 2 decimals instead of rounding down to whole dollars.
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value) || 0)
 }
 
 module.exports = { SYSTEM_SHARE_RATE, calculateClusterMetrics, formatCurrency }

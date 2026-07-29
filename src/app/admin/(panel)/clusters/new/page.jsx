@@ -119,7 +119,7 @@ export default function AdminNewClusterPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="layerStep">Layer increment ($)</Label>
-                <Input id="layerStep" type="number" min="0" step="1" value={layerStep} onChange={(e) => setLayerStep(e.target.value)} />
+                <Input id="layerStep" type="number" min="0" step="0.01" value={layerStep} onChange={(e) => setLayerStep(e.target.value)} />
               </div>
             </div>
 
@@ -158,7 +158,7 @@ export default function AdminNewClusterPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="cellValue">Value per cell ($)</Label>
-                <Input id="cellValue" type="number" min="1" step="1" value={cellValue} onChange={(e) => setCellValue(e.target.value)} />
+                <Input id="cellValue" type="number" min="0.01" step="0.01" value={cellValue} onChange={(e) => setCellValue(e.target.value)} />
               </div>
             </div>
 
