@@ -1,10 +1,18 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://novel-server-cdcp.onrender.com"
 
-const MAX_RETRIES = 2
-const RETRY_DELAY_MS = 900
+// The free-tier backend can take 30-50s to wake up from a cold sleep, so the retry budget needs
+// to actually cover that instead of giving up after a couple seconds and leaving the UI stuck on
+// stale/default data.
+const MAX_RETRIES = 5
+const BASE_RETRY_DELAY_MS = 1000
+const MAX_RETRY_DELAY_MS = 8000
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function retryDelay(attempt) {
+  return Math.min(BASE_RETRY_DELAY_MS * 2 ** attempt, MAX_RETRY_DELAY_MS)
 }
 
 // The Express API sends JSON error bodies like {"success":false,"error":"..."} — extract just the
@@ -39,7 +47,7 @@ async function requestJson(url, options = {}) {
         // Retry on server-side/gateway errors (the free-tier backend can be cold-starting after
         // idling), but not on 4xx client errors — retrying those would never succeed.
         if (response.status >= 500 && attempt < MAX_RETRIES) {
-          await sleep(RETRY_DELAY_MS * (attempt + 1))
+          await sleep(retryDelay(attempt))
           continue
         }
         throw new Error(parseErrorMessage(text))
@@ -54,7 +62,7 @@ async function requestJson(url, options = {}) {
       lastError = error
       const isNetworkError = error instanceof TypeError
       if (isNetworkError && attempt < MAX_RETRIES) {
-        await sleep(RETRY_DELAY_MS * (attempt + 1))
+        await sleep(retryDelay(attempt))
         continue
       }
       throw error

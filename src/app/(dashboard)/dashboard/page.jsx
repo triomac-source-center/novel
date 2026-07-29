@@ -190,32 +190,33 @@ export default function DashboardPage() {
             </CardTitle>
             <CardDescription>Open clusters and current progress</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="p-0">
             {displayClusters.length === 0 ? (
-              <EmptyState icon={Layers3} title="No clusters yet" description="Published clusters will show up here." />
+              <div className="p-6">
+                <EmptyState icon={Layers3} title="No clusters yet" description="Published clusters will show up here." />
+              </div>
             ) : (
-              displayClusters.map((cluster) => (
-                <Link
-                  key={cluster.id ?? cluster.name}
-                  href={`/market/${cluster.id}`}
-                  className="block rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:border-primary/40 hover:bg-accent"
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-foreground">{cluster.name}</p>
-                      <p className="text-xs text-muted-foreground">{cluster.symbol} • {cluster.status}</p>
+              <div className="divide-y divide-border">
+                {displayClusters.map((cluster) => (
+                  <Link
+                    key={cluster.id ?? cluster.name}
+                    href={`/market/${cluster.id}`}
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-semibold text-primary">
+                      {cluster.symbol.slice(0, 2)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">{cluster.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{cluster.symbol} • {cluster.progress}% filled</p>
                     </div>
-                    <span className="text-sm font-semibold text-primary">${cluster.invested.toLocaleString()}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted">
-                    <div className="h-2 rounded-full bg-primary" style={{ width: `${cluster.progress}%` }} />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{cluster.progress}% filled</span>
-                    <span>Target: ${cluster.target.toLocaleString()}</span>
-                  </div>
-                </Link>
-              ))
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-semibold text-primary">${cluster.invested.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">{cluster.status}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>

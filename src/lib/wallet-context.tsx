@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs"
 import { API_BASE_URL, fetchAccount } from "@/lib/api-client"
 
 const defaultAccount = { balance: 0, transactions: [] }
+const BACKGROUND_REFRESH_MS = 30000
 
 const WalletContext = createContext(undefined)
 
@@ -50,6 +51,15 @@ export function WalletProvider({ children }) {
     }
   }, [clerkUser?.id, isSignedIn, refresh])
 
+  // Safety net: even if the initial load's retries (api-client.js) run out while the backend is
+  // still cold-starting, a fresh account fetch every 30s self-heals a stuck $0 display without
+  // requiring the user to trigger a mutation first.
+  useEffect(() => {
+    if (!clerkUser?.id || !isSignedIn) return
+    const interval = setInterval(() => refresh(), BACKGROUND_REFRESH_MS)
+    return () => clearInterval(interval)
+  }, [clerkUser?.id, isSignedIn, refresh])
+
   useEffect(() => {
     if (!clerkUser?.id || !isSignedIn || typeof window === "undefined") return
 
@@ -58,8 +68,11 @@ export function WalletProvider({ children }) {
     const handleBalanceUpdate = (event) => {
       try {
         const payload = JSON.parse(event.data)
-        const setter = payload.accountType === "demo" ? setDemo : setReal
-        setter((prev) => ({ ...prev, balance: Number(payload.balance ?? prev.balance) }))
+        const accountType = payload.accountType === "demo" ? "demo" : "real"
+        // Re-fetch the full account (not just patch the balance number in place) so transaction-
+        // derived views (Portfolio, Trade's invested/profit lists) also update live — this fires
+        // whenever balance changes for any reason, including someone else buying your cell.
+        refresh(accountType)
       } catch (err) {
         console.error("Failed to parse balance-update event:", err)
       }
@@ -71,7 +84,7 @@ export function WalletProvider({ children }) {
       source.removeEventListener("balance-update", handleBalanceUpdate)
       source.close()
     }
-  }, [clerkUser?.id, isSignedIn])
+  }, [clerkUser?.id, isSignedIn, refresh])
 
   const setBalance = useCallback((type, balance, transactions) => {
     const setter = type === "demo" ? setDemo : setReal

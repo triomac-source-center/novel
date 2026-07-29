@@ -9,11 +9,10 @@ import { EmptyState } from "@/components/empty-state"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CandlestickChart, TrendingUp, Wallet } from "lucide-react"
+import { ArrowDownToLine, CandlestickChart, TrendingUp, Wallet } from "lucide-react"
 import { fetchClusters } from "@/lib/api-client"
 import { useWallet } from "@/lib/wallet-context"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
-import { InvestmentHistory } from "@/components/investment-history"
 
 const POLL_INTERVAL_MS = 5000
 
@@ -138,6 +137,18 @@ function buildClosedPositions(clusters, clerkId) {
 const TICK_INTERVAL_MS = 1000
 const TICK_STEP = 0.01
 
+// Heat-map style intensity instead of a flat green/red: the further a position has moved from
+// its entry (in percent), the stronger the color.
+function pnlColorClass(percent) {
+  if (!Number.isFinite(percent) || percent === 0) return "text-muted-foreground"
+  if (percent > 10) return "text-emerald-400"
+  if (percent > 3) return "text-emerald-500 dark:text-emerald-400"
+  if (percent > 0) return "text-emerald-700 dark:text-emerald-600"
+  if (percent > -3) return "text-red-700 dark:text-red-600"
+  if (percent > -10) return "text-red-500 dark:text-red-400"
+  return "text-red-400"
+}
+
 export default function TradePage() {
   const { user: clerkUser, isSignedIn } = useUser()
   const { real } = useWallet()
@@ -204,6 +215,15 @@ export default function TradePage() {
     [real.transactions]
   )
 
+  // Money used to buy cells (debits) is capital moved into a position, not a loss — kept entirely
+  // separate from realized profit (credits from cells being bought out), each with its own running
+  // total. Both lists refresh automatically: the polling above keeps positions fresh, and
+  // WalletProvider re-fetches transactions live whenever a balance-changing event fires.
+  const investedEntries = useMemo(() => investmentTransactions.filter((tx) => tx.type === "debit"), [investmentTransactions])
+  const profitEntries = useMemo(() => investmentTransactions.filter((tx) => tx.type === "credit"), [investmentTransactions])
+  const totalInvested = investedEntries.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
+  const totalProfit = profitEntries.reduce((sum, tx) => sum + (Number(tx.amount || 0) - Number(tx.costBasis || 0)), 0)
+
   if (!isSignedIn) return <p>Please log in</p>
 
   if (loading) {
@@ -255,29 +275,33 @@ export default function TradePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {livePositions.map((position) => (
-                  <TableRow key={position.key}>
-                    <TableCell>
-                      <Link href={`/market/${position.clusterId}`} className="font-medium text-foreground hover:text-primary">
-                        {position.symbol}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {position.layer} / {position.currentLayer}
-                        {position.vested ? " · vested" : ""}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-foreground">{position.cells}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{formatCurrency(position.entryPrice)}</TableCell>
-                    <TableCell className="text-right font-mono text-foreground">{formatCurrency(position.livePrice)}</TableCell>
-                    <TableCell className={`text-right font-mono font-semibold ${position.liveProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
-                      {position.liveProfit >= 0 ? "+" : ""}
-                      {formatCurrency(position.liveProfit)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{new Date(position.openedAt).toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
+                {livePositions.map((position) => {
+                  const costBasis = position.entryPrice * position.cells
+                  const pnlPercent = costBasis > 0 ? (position.liveProfit / costBasis) * 100 : 0
+                  return (
+                    <TableRow key={position.key}>
+                      <TableCell>
+                        <Link href={`/market/${position.clusterId}`} className="font-medium text-foreground hover:text-primary">
+                          {position.symbol}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {position.layer} / {position.currentLayer}
+                          {position.vested ? " · vested" : ""}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-foreground">{position.cells}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatCurrency(position.entryPrice)}</TableCell>
+                      <TableCell className="text-right font-mono text-foreground">{formatCurrency(position.livePrice)}</TableCell>
+                      <TableCell className={`text-right font-mono font-semibold ${pnlColorClass(pnlPercent)}`}>
+                        {position.liveProfit >= 0 ? "+" : ""}
+                        {formatCurrency(position.liveProfit)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{new Date(position.openedAt).toLocaleString()}</TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}
@@ -306,36 +330,123 @@ export default function TradePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {closedPositions.map((position) => (
-                  <TableRow key={position.key}>
-                    <TableCell>
-                      <Link href={`/market/${position.clusterId}`} className="font-medium text-foreground hover:text-primary">
-                        {position.symbol}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{position.layer}</TableCell>
-                    <TableCell className="text-right text-foreground">{position.cells}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{formatCurrency(position.entryPrice)}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{position.exitPrice === null ? "—" : formatCurrency(position.exitPrice)}</TableCell>
-                    <TableCell className={`text-right font-semibold ${position.gain === null ? "text-muted-foreground" : position.gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
-                      {position.gain === null ? "—" : `${position.gain >= 0 ? "+" : ""}${formatCurrency(position.gain)}`}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {position.reason}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{position.closedAt ? new Date(position.closedAt).toLocaleString() : "—"}</TableCell>
-                  </TableRow>
-                ))}
+                {closedPositions.map((position) => {
+                  const costBasis = position.entryPrice * position.cells
+                  const gainPercent = position.gain !== null && costBasis > 0 ? (position.gain / costBasis) * 100 : 0
+                  return (
+                    <TableRow key={position.key}>
+                      <TableCell>
+                        <Link href={`/market/${position.clusterId}`} className="font-medium text-foreground hover:text-primary">
+                          {position.symbol}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{position.layer}</TableCell>
+                      <TableCell className="text-right text-foreground">{position.cells}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{formatCurrency(position.entryPrice)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{position.exitPrice === null ? "—" : formatCurrency(position.exitPrice)}</TableCell>
+                      <TableCell className={`text-right font-semibold ${position.gain === null ? "text-muted-foreground" : pnlColorClass(gainPercent)}`}>
+                        {position.gain === null ? "—" : `${position.gain >= 0 ? "+" : ""}${formatCurrency(position.gain)}`}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {position.reason}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{position.closedAt ? new Date(position.closedAt).toLocaleString() : "—"}</TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}
         </CardContent>
       </Card>
 
-      <div className="mt-6">
-        <InvestmentHistory transactions={investmentTransactions} title="Realized activity" />
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <ArrowDownToLine className="h-3.5 w-3.5" />
+              Invested
+            </p>
+            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(totalInvested)}</p>
+          </div>
+          <Card className="border-border shadow-sm">
+            <CardContent className="p-0">
+              {investedEntries.length === 0 ? (
+                <div className="p-6">
+                  <EmptyState icon={ArrowDownToLine} title="No investments yet" description="Money used to buy cells will show up here." />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cluster</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {investedEntries.map((tx, index) => (
+                      <TableRow key={`${tx.createdAt}-${index}`}>
+                        <TableCell className="text-foreground">{tx.clusterSymbol || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(tx.amount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              <TrendingUp className="h-3.5 w-3.5" />
+              Profit
+            </p>
+            <p className={`text-sm font-semibold ${totalProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+              {totalProfit >= 0 ? "+" : ""}
+              {formatCurrency(totalProfit)}
+            </p>
+          </div>
+          <Card className="border-border shadow-sm">
+            <CardContent className="p-0">
+              {profitEntries.length === 0 ? (
+                <div className="p-6">
+                  <EmptyState icon={TrendingUp} title="No profit yet" description="Realized gains from cell payouts will show up here." />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cluster</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Gain</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {profitEntries.map((tx, index) => {
+                      const gain = Number(tx.amount || 0) - Number(tx.costBasis || 0)
+                      return (
+                        <TableRow key={`${tx.createdAt}-${index}`}>
+                          <TableCell className="text-foreground">{tx.clusterSymbol || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell className={`text-right font-semibold ${gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
+                            {gain >= 0 ? "+" : ""}
+                            {formatCurrency(gain)}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
