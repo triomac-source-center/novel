@@ -152,9 +152,9 @@ export default function TradePage() {
   const { user: clerkUser, isSignedIn } = useUser()
   const { real } = useWallet()
   // Shared "clusters" key: market/[id]'s invest handler calls the SWR global mutate("clusters")
-  // right after a successful trade, so this revalidates immediately — no interval polling needed,
-  // same key is used on the dashboard for the same reason.
-  const { data, isLoading } = useSWR("clusters", fetchClusters, { revalidateOnFocus: true })
+  // right after a successful trade, so the actor sees it instantly. The refreshInterval on top of
+  // that is what makes a cluster you're watching update live when someone ELSE trades in it.
+  const { data, isLoading } = useSWR("clusters", fetchClusters, { revalidateOnFocus: true, refreshInterval: 5000 })
   const clusters = useMemo(() => (Array.isArray(data?.data) ? data.data : []), [data])
   // Same reasoning as WalletProvider: `isLoading` clears after the first attempt settles even on
   // failure, so gate the skeleton on data presence instead, or a stale $0/empty state can flash.
@@ -189,6 +189,9 @@ export default function TradePage() {
 
   const floatingPnl = livePositions.reduce((sum, position) => sum + position.liveProfit, 0)
   const equity = real.balance + floatingPnl
+  // Looked up by an invested entry's cluster+layer to show what that position is worth right now
+  // if it were bought out at the current layer price — "potential profit", next to what was paid.
+  const positionsByKey = new Map(livePositions.map((position) => [position.key, position]))
 
   // Realized activity (layer transitions, cell payouts) is persisted server-side on the user's
   // transaction history (category: "investment") — this isn't a client-only computation, it's the
@@ -229,10 +232,10 @@ export default function TradePage() {
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         <StatCard label="Balance" value={formatCurrency(real.balance)} icon={Wallet} />
         <StatCard
-          label="Floating P/L"
-          value={`${floatingPnl >= 0 ? "+" : ""}${formatCurrency(floatingPnl)}`}
+          label="PNL"
+          value={`${totalProfit >= 0 ? "+" : ""}${formatCurrency(totalProfit)}`}
           icon={TrendingUp}
-          accent={floatingPnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}
+          accent={totalProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}
         />
         <StatCard label="Equity" value={formatCurrency(equity)} icon={Wallet} accent="text-primary" />
       </div>
@@ -241,9 +244,7 @@ export default function TradePage() {
       <Card className="border-border shadow-sm">
         <CardContent className="p-0">
           {positions.length === 0 ? (
-            <div className="p-6">
-              <EmptyState icon={CandlestickChart} title="No open positions" description="Fund a cell on the market to open your first position." />
-            </div>
+            <EmptyState compact icon={CandlestickChart} title="No open positions" />
           ) : (
             <Table>
               <TableHeader>
@@ -295,9 +296,7 @@ export default function TradePage() {
       <Card className="border-border shadow-sm">
         <CardContent className="p-0">
           {closedPositions.length === 0 ? (
-            <div className="p-6">
-              <EmptyState icon={CandlestickChart} title="No closed positions yet" description="Positions you've sold or that reached a cluster's final layer will show up here." />
-            </div>
+            <EmptyState compact icon={CandlestickChart} title="No closed positions yet" />
           ) : (
             <Table>
               <TableHeader>
@@ -352,7 +351,7 @@ export default function TradePage() {
               <ArrowDownToLine className="h-3.5 w-3.5" />
               Invested
             </p>
-            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(totalInvested)}</p>
+            <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(totalInvested)}</p>
           </div>
           <Card className="border-border shadow-sm">
             <CardContent className="p-0">
@@ -367,16 +366,25 @@ export default function TradePage() {
                       <TableHead>Cluster</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Potential profit</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {investedEntries.map((tx, index) => (
-                      <TableRow key={`${tx.createdAt}-${index}`}>
-                        <TableCell className="text-foreground">{tx.clusterSymbol || "—"}</TableCell>
-                        <TableCell className="text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(tx.amount)}</TableCell>
-                      </TableRow>
-                    ))}
+                    {investedEntries.map((tx, index) => {
+                      // Still-open position from this same buy (cluster+layer): shown as a light,
+                      // unrealized estimate — "—" once it's been sold or the cluster matured.
+                      const openPosition = positionsByKey.get(`${tx.clusterId}-${tx.layer}`)
+                      return (
+                        <TableRow key={`${tx.createdAt}-${index}`}>
+                          <TableCell className="text-foreground">{tx.clusterSymbol || "—"}</TableCell>
+                          <TableCell className="text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-right font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(tx.amount)}</TableCell>
+                          <TableCell className="text-right text-sm text-muted-foreground/70">
+                            {openPosition ? `${openPosition.liveProfit >= 0 ? "+" : ""}${formatCurrency(openPosition.liveProfit)}` : "—"}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
                   </TableBody>
                 </Table>
               )}

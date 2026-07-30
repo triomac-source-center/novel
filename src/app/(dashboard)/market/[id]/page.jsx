@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
-import { mutate as mutateGlobal } from "swr"
+import useSWR, { mutate as mutateGlobal } from "swr"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EmptyState } from "@/components/empty-state"
-import { ArrowLeft, Lock, Share2, Users } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Share2, Users } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 import { fetchClusterById, fetchUsersByClerkIds, investInCluster } from "@/lib/api-client"
 import { useWallet } from "@/lib/wallet-context"
@@ -47,40 +47,26 @@ export default function ClusterPage() {
   const params = useParams()
   const router = useRouter()
   const { user: clerkUser, isSignedIn } = useUser()
-  const { setBalance } = useWallet()
+  const { real, setBalance } = useWallet()
   const toast = useToast()
   const id = params?.id
 
-  const [cluster, setCluster] = useState(null)
   const [usersById, setUsersById] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
   const [cells, setCells] = useState("1")
   const [investing, setInvesting] = useState(false)
 
-  useEffect(() => {
-    if (!id) return
-    let isActive = true
-
-    async function load() {
-      try {
-        setLoading(true)
-        setNotFound(false)
-        const data = await fetchClusterById(id)
-        if (isActive && data?.data) setCluster(normalize(data.data))
-      } catch (err) {
-        console.error(err)
-        if (isActive) setNotFound(true)
-      } finally {
-        if (isActive) setLoading(false)
-      }
-    }
-
-    load()
-    return () => {
-      isActive = false
-    }
-  }, [id])
+  // Polled short so this page updates live for anyone viewing it, not just the person trading —
+  // e.g. two people looking at the same cluster both see a purchase land within a few seconds,
+  // no F5 needed. mutateGlobal("clusters") after a successful invest keeps Dashboard/Trade in sync
+  // the same way; mutate() below does the same for this page's own key immediately after a trade.
+  const { data, error: fetchError, isLoading, mutate } = useSWR(
+    id ? ["cluster", id] : null,
+    () => fetchClusterById(id),
+    { refreshInterval: 4000, revalidateOnFocus: true }
+  )
+  const cluster = useMemo(() => (data?.data ? normalize(data.data) : null), [data])
+  const loading = !data && isLoading
+  const notFound = Boolean(fetchError) && !data
 
   useEffect(() => {
     if (!cluster?.holders?.length) return
@@ -140,13 +126,21 @@ export default function ClusterPage() {
       return
     }
 
+    const total = parsedCells * metrics.currentCellPrice
+    // Fail fast client-side so a purchase never gets a chance to send a request that would drive
+    // the balance negative — the backend enforces this too, this just avoids the round trip.
+    if (real.balance < total) {
+      toast.error("Insufficient balance.")
+      return
+    }
+
     setInvesting(true)
 
     try {
       const result = await investInCluster(cluster.id, { clerkId: clerkUser.id, cells: parsedCells })
-      setCluster(normalize(result.data))
+      mutate(result, { revalidate: false })
       setCells("1")
-      toast.success(`Invested ${formatCurrency(parsedCells * metrics.currentCellPrice)} in layer ${metrics.currentLayer}.`)
+      toast.success(`Bought ${parsedCells} cell(s) in ${cluster.symbol}, layer ${metrics.currentLayer}, for ${formatCurrency(total)}.`)
       if (result?.wallet?.balance !== undefined) setBalance("real", result.wallet.balance)
       // Revalidate the shared "clusters" SWR key so Trade/Dashboard/Portfolio/Market pick up this
       // trade immediately instead of waiting for their own next poll tick.
@@ -217,9 +211,9 @@ export default function ClusterPage() {
                     <div key={entry.layer} className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-2.5 py-1.5 text-xs">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-[10px]">Layer {entry.layer}</Badge>
-                        <span className="flex items-center gap-1 text-muted-foreground">
-                          <Lock className="h-3 w-3" />
-                          Locked
+                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Complete
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-muted-foreground">

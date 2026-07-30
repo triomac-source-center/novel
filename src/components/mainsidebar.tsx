@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { CandlestickChart, History, LayoutDashboard, Layers3, LineChart, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
+import { CandlestickChart, Globe2, History, LayoutDashboard, Layers3, LineChart, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { hasAdminAccess } from "@/lib/admin"
 import { useWallet } from "@/lib/wallet-context"
@@ -15,6 +15,7 @@ const navigation = [
   { name: "Portfolio", href: "/portfolio", icon: LineChart },
   { name: "Wallet", href: "/wallet", icon: Wallet },
   { name: "Activity", href: "/transactions", icon: History },
+  { name: "Global History", href: "/global-history", icon: Globe2 },
   { name: "Profile", href: "/profile", icon: UserRound },
 ]
 

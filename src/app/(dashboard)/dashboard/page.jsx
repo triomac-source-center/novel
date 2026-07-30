@@ -41,13 +41,19 @@ function getClusterId(cluster, index) {
 }
 
 function normalizeCluster(cluster, index) {
+  // Use the backend's actual field names directly. The previous fallback chains (e.g.
+  // `cluster.cellCount ?? cluster.totalCells ?? cluster.cells ?? cluster.expVolume`) accidentally
+  // picked up `cluster.cells` — the raw cell-objects ARRAY the API always returns — before ever
+  // reaching `expVolume`, since `??` only skips null/undefined and an array is neither. `Number(array)`
+  // is NaN, which zeroed out every downstream liquidity figure. This is what showed "$0" for every
+  // real cluster on the dashboard.
   const metrics = calculateClusterMetrics({
-    cellCount: Number(cluster.cellCount ?? cluster.totalCells ?? cluster.cells ?? cluster.expVolume ?? 10),
-    cellValue: Number(cluster.cellValue ?? cluster.valuePerCell ?? cluster.entryPoint ?? cluster.recette ?? 1000),
-    filledCells: Number(cluster.filledCells ?? cluster.filled ?? cluster.holderPoint ?? cluster.actualVolume ?? 0),
-    currentLayer: Number(cluster.currentLayer ?? cluster.layer ?? 1),
-    maxLayers: Number(cluster.maxLayers ?? cluster.layers ?? 1),
-    layerStep: Number(cluster.layerStep ?? cluster.layerIncrement ?? 0),
+    cellCount: Number(cluster.expVolume ?? 10),
+    cellValue: Number(cluster.entryPoint ?? 1000),
+    filledCells: Number(cluster.holderPoint ?? 0),
+    currentLayer: Number(cluster.currentLayer ?? 1),
+    maxLayers: Number(cluster.maxLayers ?? 1),
+    layerStep: Number(cluster.layerStep ?? 0),
   })
 
   return {
@@ -64,10 +70,15 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const { real, demo, loading: walletLoading, error: walletError, refresh: refreshWallet } = useWallet()
   // Same "clusters" SWR key as the Trade page and market/[id]'s invest handler: a trade made on
-  // the cluster detail page calls the global mutate("clusters") right after it succeeds, so this
-  // picks it up immediately — no interval polling needed, and revalidateOnFocus catches anything
-  // done from another tab/device.
-  const { data, isLoading: clustersIsLoading } = useSWR("clusters", fetchClusters, { revalidateOnFocus: true })
+  // the cluster detail page calls the global mutate("clusters") right after it succeeds, so the
+  // actor sees it immediately. The short refreshInterval on top of that is what makes changes made
+  // by OTHER users (e.g. someone else buying into a cluster you're watching) show up live without
+  // an F5 — safe to poll now that the loading gate below settles on data/error, not a raw flag, so
+  // a background refresh can never re-trigger the skeleton or flash stale zeros.
+  const { data, isLoading: clustersIsLoading } = useSWR("clusters", fetchClusters, {
+    revalidateOnFocus: true,
+    refreshInterval: 5000,
+  })
   // Same reasoning as WalletProvider: `isLoading` clears after the first attempt settles even on
   // failure, so gate the skeleton on data presence instead of the flag alone.
   const clustersLoading = !data && clustersIsLoading
@@ -118,7 +129,6 @@ export default function DashboardPage() {
 
   const realBalance = real.balance
   const demoBalance = demo.balance
-  const totalBalance = realBalance + demoBalance
   const availableFunds = Math.round(realBalance * 0.7)
   const invested = realBalance - availableFunds
 
@@ -126,7 +136,7 @@ export default function DashboardPage() {
     { title: "Real account", value: `$${realBalance.toLocaleString()}`, subtitle: "Live funds", icon: Banknote, accent: "text-primary", badge: "Live" },
     { title: "Demo account", value: `$${demoBalance.toLocaleString()}`, subtitle: "Practice balance", icon: CircleDollarSign, accent: "text-amber-600 dark:text-amber-400", badge: "Demo" },
     { title: "Available", value: `$${availableFunds.toLocaleString()}`, subtitle: "Ready to deploy", icon: Wallet, accent: "text-emerald-600 dark:text-emerald-400", badge: "Liquid" },
-    { title: "Invested", value: `$${invested.toLocaleString()}`, subtitle: "In clusters", icon: Layers3, accent: "text-blue-600 dark:text-blue-400", badge: "Active" },
+    { title: "Invested", value: `$${invested.toLocaleString()}`, subtitle: "In clusters", icon: Layers3, accent: "text-amber-600 dark:text-amber-400", badge: "Active" },
   ]
 
   const displayClusters = clusters.slice(0, 3).map((cluster) => ({
@@ -143,12 +153,14 @@ export default function DashboardPage() {
     .sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))
     .slice(0, 5)
 
+  // The trend must track the real account balance specifically — not real+demo combined, which
+  // would make the chart jump for reasons that have nothing to do with the real balance.
   const trendPoints = recentTransactions.length > 0
     ? recentTransactions
         .slice()
         .reverse()
-        .map((tx, index) => ({ index, value: Number(tx.balanceAfter || totalBalance || 0) }))
-    : [{ index: 0, value: totalBalance }, { index: 1, value: totalBalance }]
+        .map((tx, index) => ({ index, value: Number(tx.balanceAfter ?? realBalance) }))
+    : [{ index: 0, value: realBalance }, { index: 1, value: realBalance }]
 
   const formatDate = (value) => {
     if (!value) return "—"
@@ -184,7 +196,7 @@ export default function DashboardPage() {
             <CardDescription>Latest movements across your real account</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="mb-2 text-2xl font-semibold tracking-tight text-foreground">${totalBalance.toLocaleString()}</p>
+            <p className="mb-2 text-2xl font-semibold tracking-tight text-foreground">${realBalance.toLocaleString()}</p>
             <TrendChart data={trendPoints} height={140} />
           </CardContent>
         </Card>

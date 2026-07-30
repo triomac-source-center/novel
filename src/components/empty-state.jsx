@@ -1,6 +1,15 @@
 import { cn } from "@/lib/utils"
 
-export function EmptyState({ icon: Icon, title, description, action, className }) {
+export function EmptyState({ icon: Icon, title, description, action, className, compact = false }) {
+  if (compact) {
+    return (
+      <div className={cn("flex items-center justify-center gap-2 px-4 py-4 text-center", className)}>
+        {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+        <p className="text-xs text-muted-foreground">{title}</p>
+      </div>
+    )
+  }
+
   return (
     <div
       className={cn(

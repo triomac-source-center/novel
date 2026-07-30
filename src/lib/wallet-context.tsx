@@ -18,17 +18,19 @@ export function WalletProvider({ children }) {
   const { user: clerkUser, isSignedIn } = useUser()
   const clerkId = isSignedIn ? clerkUser?.id : null
 
-  // No interval polling here on purpose — constant background refetching was the actual
-  // complaint ("auto refresh en permanence"). SWR still retries automatically on failure and
-  // revalidates on window focus; explicit updates happen via refresh()/setBalance() right after a
-  // mutation (deposit/withdraw/invest), which is the "revalidate after mutation" pattern, not a
-  // ticking timer.
+  // Short polling is back on purpose: live updates need to reach a user whose balance changed
+  // because of someone ELSE's action (e.g. their cell got bought out), not just their own. That
+  // used to cause a visible "flash to $0" complaint, but the actual bug was the `loading` flag
+  // below (it used to clear on a failed first attempt) — a background refresh after data has
+  // already loaded never touches `loading` or shows a skeleton, so this is safe now.
   const realSWR = useSWR(clerkId ? ["account", clerkId, "real"] : null, () => fetchAccount(clerkId, "real"), {
     revalidateOnFocus: true,
+    refreshInterval: 5000,
     dedupingInterval: 2000,
   })
   const demoSWR = useSWR(clerkId ? ["account", clerkId, "demo"] : null, () => fetchAccount(clerkId, "demo"), {
     revalidateOnFocus: true,
+    refreshInterval: 5000,
     dedupingInterval: 2000,
   })
 
