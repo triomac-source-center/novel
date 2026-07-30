@@ -34,12 +34,16 @@ export function WalletProvider({ children }) {
 
   const real = toAccount(realSWR.data, "real")
   const demo = toAccount(demoSWR.data, "demo")
-  // IMPORTANT: don't use SWR's `isLoading` here — it flips to false the moment the FIRST request
-  // *settles*, success or failure. On a cold-starting backend the first attempt often fails, so
-  // `isLoading` goes false with `data` still undefined, and the dashboard was rendering as if
-  // "loaded" with fallback zeros instead of showing the loading skeleton while SWR quietly retries
-  // in the background. Gate purely on whether we actually have data yet.
-  const loading = Boolean(clerkId) && (!realSWR.data || !demoSWR.data)
+  // Don't use SWR's `isLoading` here — it flips to false the moment the FIRST request *settles*,
+  // success or failure, which used to make the dashboard render fallback zeros as if they were
+  // real data while SWR quietly retried in the background. But gating purely on `data` presence
+  // (no escape hatch) hangs on the skeleton forever if the request keeps failing for real (backend
+  // down, not just cold-starting). Settle on either data OR a confirmed error, so a genuine
+  // failure surfaces as an error state instead of an infinite spinner.
+  const realSettled = Boolean(realSWR.data) || Boolean(realSWR.error)
+  const demoSettled = Boolean(demoSWR.data) || Boolean(demoSWR.error)
+  const loading = Boolean(clerkId) && (!realSettled || !demoSettled)
+  const error = Boolean(clerkId) && !loading && !realSWR.data && !demoSWR.data && Boolean(realSWR.error || demoSWR.error)
 
   // Call this right after any mutation (deposit/withdraw/invest) to force an immediate revalidate
   // instead of waiting for the next polling tick.
@@ -69,7 +73,7 @@ export function WalletProvider({ children }) {
     [realSWR, demoSWR]
   )
 
-  return <WalletContext.Provider value={{ real, demo, loading, refresh, setBalance }}>{children}</WalletContext.Provider>
+  return <WalletContext.Provider value={{ real, demo, loading, error, refresh, setBalance }}>{children}</WalletContext.Provider>
 }
 
 export function useWallet() {

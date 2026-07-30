@@ -7,7 +7,7 @@ import { useWallet } from "@/lib/wallet-context"
 
 export default function MainLayoutDashboard({ children }) {
   const { user: clerkUser, isSignedIn } = useUser()
-  const { loading } = useWallet()
+  const { loading, error, refresh } = useWallet()
   const { user } = useAuth()
 
   if (!user) {
@@ -15,6 +15,23 @@ export default function MainLayoutDashboard({ children }) {
   }
 
   if (!isSignedIn) return <p>Please log in</p>
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bgmain p-6">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-muted/30 p-10 text-center">
+          <p className="text-sm font-medium text-foreground">Couldn&apos;t reach the server</p>
+          <p className="text-xs text-muted-foreground">The account service didn&apos;t respond. It may still be waking up.</p>
+          <button
+            type="button"
+            onClick={() => refresh()}
+            className="mt-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
   if (loading) {
     return (
       <div className="min-h-screen bgmain p-6 lg:p-8">

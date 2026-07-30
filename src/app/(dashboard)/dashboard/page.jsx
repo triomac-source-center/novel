@@ -62,7 +62,7 @@ function normalizeCluster(cluster, index) {
 export default function DashboardPage() {
   const { isSignedIn } = useUser()
   const { user } = useAuth()
-  const { real, demo, loading: walletLoading } = useWallet()
+  const { real, demo, loading: walletLoading, error: walletError, refresh: refreshWallet } = useWallet()
   // Same "clusters" SWR key as the Trade page and market/[id]'s invest handler: a trade made on
   // the cluster detail page calls the global mutate("clusters") right after it succeeds, so this
   // picks it up immediately — no interval polling needed, and revalidateOnFocus catches anything
@@ -78,6 +78,25 @@ export default function DashboardPage() {
 
   if (!user) return null
   if (!isSignedIn) return <p>Please log in</p>
+  if (walletError) {
+    return (
+      <div className="bgmain p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-muted/30 p-10 text-center">
+            <p className="text-sm font-medium text-foreground">Couldn&apos;t reach the server</p>
+            <p className="text-xs text-muted-foreground">The account service didn&apos;t respond. It may still be waking up.</p>
+            <button
+              type="button"
+              onClick={() => refreshWallet()}
+              className="mt-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
   if (walletLoading || clustersLoading) {
     return (
       <div className="bgmain p-6 lg:p-8">
