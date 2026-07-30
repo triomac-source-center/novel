@@ -15,8 +15,6 @@ import { fetchClusters } from "@/lib/api-client"
 import { useWallet } from "@/lib/wallet-context"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 
-const POLL_INTERVAL_MS = 5000
-
 function buildPositions(clusters, clerkId) {
   if (!clerkId) return []
   const positions = []
@@ -154,11 +152,13 @@ export default function TradePage() {
   const { user: clerkUser, isSignedIn } = useUser()
   const { real } = useWallet()
   // Shared "clusters" key: market/[id]'s invest handler calls the SWR global mutate("clusters")
-  // right after a successful trade, so this revalidates immediately instead of waiting up to 5s
-  // for the next poll — same key is used on the dashboard for the same reason.
-  const { data, isLoading } = useSWR("clusters", fetchClusters, { refreshInterval: POLL_INTERVAL_MS })
+  // right after a successful trade, so this revalidates immediately — no interval polling needed,
+  // same key is used on the dashboard for the same reason.
+  const { data, isLoading } = useSWR("clusters", fetchClusters, { revalidateOnFocus: true })
   const clusters = useMemo(() => (Array.isArray(data?.data) ? data.data : []), [data])
-  const loading = isLoading && clusters.length === 0
+  // Same reasoning as WalletProvider: `isLoading` clears after the first attempt settles even on
+  // failure, so gate the skeleton on data presence instead, or a stale $0/empty state can flash.
+  const loading = !data && isLoading
   const [ticks, setTicks] = useState({})
 
   const positions = useMemo(() => buildPositions(clusters, clerkUser?.id), [clusters, clerkUser?.id])

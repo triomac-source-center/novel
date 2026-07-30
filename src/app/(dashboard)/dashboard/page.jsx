@@ -65,8 +65,12 @@ export default function DashboardPage() {
   const { real, demo, loading: walletLoading } = useWallet()
   // Same "clusters" SWR key as the Trade page and market/[id]'s invest handler: a trade made on
   // the cluster detail page calls the global mutate("clusters") right after it succeeds, so this
-  // picks it up immediately instead of waiting for the next poll tick.
-  const { data, isLoading: clustersLoading } = useSWR("clusters", fetchClusters, { refreshInterval: 7000 })
+  // picks it up immediately — no interval polling needed, and revalidateOnFocus catches anything
+  // done from another tab/device.
+  const { data, isLoading: clustersIsLoading } = useSWR("clusters", fetchClusters, { revalidateOnFocus: true })
+  // Same reasoning as WalletProvider: `isLoading` clears after the first attempt settles even on
+  // failure, so gate the skeleton on data presence instead of the flag alone.
+  const clustersLoading = !data && clustersIsLoading
   const clusters = useMemo(() => {
     const payload = Array.isArray(data?.data) ? data.data.filter((c) => c.status !== "offline") : []
     return payload.map((cluster, index) => normalizeCluster(cluster, index))

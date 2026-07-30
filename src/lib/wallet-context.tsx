@@ -7,8 +7,6 @@ import { fetchAccount } from "@/lib/api-client"
 
 const WalletContext = createContext(undefined)
 
-const REFRESH_INTERVAL_MS = 7000
-
 function toAccount(data, accountType) {
   return {
     balance: Number(data?.wallet?.balance ?? data?.balance ?? (accountType === "demo" ? 10000 : 0)),
@@ -20,24 +18,28 @@ export function WalletProvider({ children }) {
   const { user: clerkUser, isSignedIn } = useUser()
   const clerkId = isSignedIn ? clerkUser?.id : null
 
-  // SWR handles the retry/backoff, request de-duplication and polling itself instead of the
-  // hand-rolled fetch+setInterval logic this used to have — it re-fetches every 7s, on window
-  // focus, and reruns automatically after a transient failure (e.g. the free-tier backend cold-
-  // starting), so the dashboard can no longer get permanently stuck showing $0.
+  // No interval polling here on purpose — constant background refetching was the actual
+  // complaint ("auto refresh en permanence"). SWR still retries automatically on failure and
+  // revalidates on window focus; explicit updates happen via refresh()/setBalance() right after a
+  // mutation (deposit/withdraw/invest), which is the "revalidate after mutation" pattern, not a
+  // ticking timer.
   const realSWR = useSWR(clerkId ? ["account", clerkId, "real"] : null, () => fetchAccount(clerkId, "real"), {
-    refreshInterval: REFRESH_INTERVAL_MS,
     revalidateOnFocus: true,
     dedupingInterval: 2000,
   })
   const demoSWR = useSWR(clerkId ? ["account", clerkId, "demo"] : null, () => fetchAccount(clerkId, "demo"), {
-    refreshInterval: REFRESH_INTERVAL_MS,
     revalidateOnFocus: true,
     dedupingInterval: 2000,
   })
 
   const real = toAccount(realSWR.data, "real")
   const demo = toAccount(demoSWR.data, "demo")
-  const loading = Boolean(clerkId) && (realSWR.isLoading || demoSWR.isLoading)
+  // IMPORTANT: don't use SWR's `isLoading` here — it flips to false the moment the FIRST request
+  // *settles*, success or failure. On a cold-starting backend the first attempt often fails, so
+  // `isLoading` goes false with `data` still undefined, and the dashboard was rendering as if
+  // "loaded" with fallback zeros instead of showing the loading skeleton while SWR quietly retries
+  // in the background. Gate purely on whether we actually have data yet.
+  const loading = Boolean(clerkId) && (!realSWR.data || !demoSWR.data)
 
   // Call this right after any mutation (deposit/withdraw/invest) to force an immediate revalidate
   // instead of waiting for the next polling tick.
