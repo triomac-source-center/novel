@@ -211,14 +211,11 @@ export default function ClusterPage() {
                     <div key={entry.layer} className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-2.5 py-1.5 text-xs">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-[10px]">Layer {entry.layer}</Badge>
-                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Complete
-                        </span>
                       </div>
                       <div className="flex items-center gap-3 text-muted-foreground">
                         <span>{entry.filledCells} cells</span>
                         <span>{formatCurrency(entry.pricePerCell)}/cell</span>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                       </div>
                     </div>
                   ))}

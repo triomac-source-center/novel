@@ -313,8 +313,6 @@ export default function TradePage() {
               </TableHeader>
               <TableBody>
                 {closedPositions.map((position) => {
-                  const costBasis = position.entryPrice * position.cells
-                  const gainPercent = position.gain !== null && costBasis > 0 ? (position.gain / costBasis) * 100 : 0
                   return (
                     <TableRow key={position.key}>
                       <TableCell>
@@ -326,7 +324,9 @@ export default function TradePage() {
                       <TableCell className="text-right text-foreground">{position.cells}</TableCell>
                       <TableCell className="text-right text-muted-foreground">{formatCurrency(position.entryPrice)}</TableCell>
                       <TableCell className="text-right text-muted-foreground">{position.exitPrice === null ? "—" : formatCurrency(position.exitPrice)}</TableCell>
-                      <TableCell className={`text-right font-semibold ${position.gain === null ? "text-muted-foreground" : pnlColorClass(gainPercent)}`}>
+                      {/* Closed positions are settled — shown in a neutral light gray rather than
+                          green/red, since they're no longer "live" gains/losses to react to. */}
+                      <TableCell className="text-right font-semibold text-muted-foreground/70">
                         {position.gain === null ? "—" : `${position.gain >= 0 ? "+" : ""}${formatCurrency(position.gain)}`}
                       </TableCell>
                       <TableCell>
@@ -351,7 +351,7 @@ export default function TradePage() {
               <ArrowDownToLine className="h-3.5 w-3.5" />
               Invested
             </p>
-            <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(totalInvested)}</p>
+            <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(totalInvested)}</p>
           </div>
           <Card className="border-border shadow-sm">
             <CardContent className="p-0">
@@ -378,7 +378,7 @@ export default function TradePage() {
                         <TableRow key={`${tx.createdAt}-${index}`}>
                           <TableCell className="text-foreground">{tx.clusterSymbol || "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-right font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(tx.amount)}</TableCell>
+                          <TableCell className="text-right font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(tx.amount)}</TableCell>
                           <TableCell className="text-right text-sm text-muted-foreground/70">
                             {openPosition ? `${openPosition.liveProfit >= 0 ? "+" : ""}${formatCurrency(openPosition.liveProfit)}` : "—"}
                           </TableCell>

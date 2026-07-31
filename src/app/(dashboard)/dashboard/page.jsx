@@ -136,7 +136,7 @@ export default function DashboardPage() {
     { title: "Real account", value: `$${realBalance.toLocaleString()}`, subtitle: "Live funds", icon: Banknote, accent: "text-primary", badge: "Live" },
     { title: "Demo account", value: `$${demoBalance.toLocaleString()}`, subtitle: "Practice balance", icon: CircleDollarSign, accent: "text-amber-600 dark:text-amber-400", badge: "Demo" },
     { title: "Available", value: `$${availableFunds.toLocaleString()}`, subtitle: "Ready to deploy", icon: Wallet, accent: "text-emerald-600 dark:text-emerald-400", badge: "Liquid" },
-    { title: "Invested", value: `$${invested.toLocaleString()}`, subtitle: "In clusters", icon: Layers3, accent: "text-amber-600 dark:text-amber-400", badge: "Active" },
+    { title: "Invested", value: `$${invested.toLocaleString()}`, subtitle: "In clusters", icon: Layers3, accent: "text-blue-600 dark:text-blue-400", badge: "Active" },
   ]
 
   const displayClusters = clusters.slice(0, 3).map((cluster) => ({

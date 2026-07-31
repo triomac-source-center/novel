@@ -87,7 +87,7 @@ export default function GlobalHistoryPage() {
                           <div className="flex items-center gap-2">
                             <div
                               className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                isBuy ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                isBuy ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                               }`}
                             >
                               {isBuy ? <ArrowDownToLine className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
@@ -105,7 +105,7 @@ export default function GlobalHistoryPage() {
                         <TableCell
                           className={`text-right font-semibold ${
                             isBuy
-                              ? "text-amber-600 dark:text-amber-400"
+                              ? "text-blue-600 dark:text-blue-400"
                               : entry.gain >= 0
                                 ? "text-emerald-600 dark:text-emerald-400"
                                 : "text-destructive"
