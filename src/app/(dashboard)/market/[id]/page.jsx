@@ -118,7 +118,7 @@ export default function ClusterPage() {
       return
     }
     if (parsedCells > metrics.remainingCells) {
-      toast.error(`Only ${metrics.remainingCells} cell(s) remaining.`)
+      toast.error(`Purchase impossible: only ${metrics.remainingCells} cell(s) are available at this layer, you requested ${parsedCells}.`)
       return
     }
     if (!isSignedIn || !clerkUser?.id) {
