@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, Layers3, Lock, PiggyBank, PlusCircle, ShieldCheck } from "lucide-react"
+import { Award, LayoutDashboard, Layers3, Lock, PiggyBank, PlusCircle, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -10,6 +10,7 @@ const navigation = [
   { name: "Clusters", href: "/admin/clusters", icon: Layers3 },
   { name: "New cluster", href: "/admin/clusters/new", icon: PlusCircle },
   { name: "System share", href: "/admin/system-share", icon: PiggyBank },
+  { name: "Authorship blocks", href: "/admin/authorship-blocks", icon: Award },
 ]
 
 export default function AdminPanelLayout({ children }) {

@@ -208,3 +208,32 @@ export async function fetchUsersByClerkIds(clerkIds) {
   if (ids.length === 0) return { success: true, data: [] }
   return requestJson(`${API_BASE_URL}/api/users/lookup?clerkIds=${encodeURIComponent(ids.join(","))}`)
 }
+
+export async function fetchBlocks({ status, clusterId, ownerClerkId, all } = {}) {
+  const params = new URLSearchParams()
+  if (status) params.set("status", status)
+  if (clusterId) params.set("clusterId", clusterId)
+  if (ownerClerkId) params.set("ownerClerkId", ownerClerkId)
+  if (all) params.set("all", "true")
+  const query = params.toString()
+  return requestJson(`${API_BASE_URL}/api/blocks${query ? `?${query}` : ""}`)
+}
+
+export async function fetchBlockById(blockId) {
+  if (!blockId) throw new Error("Missing block id")
+  return requestJson(`${API_BASE_URL}/api/blocks/${encodeURIComponent(blockId)}`)
+}
+
+export async function buyBlocks(payload) {
+  return postJson(`${API_BASE_URL}/api/blocks/buy`, payload)
+}
+
+export async function listBlockForResale(blockId, payload) {
+  if (!blockId) throw new Error("Missing block id")
+  return patchJson(`${API_BASE_URL}/api/blocks/${encodeURIComponent(blockId)}/list`, payload)
+}
+
+export async function unlistBlock(blockId, payload) {
+  if (!blockId) throw new Error("Missing block id")
+  return patchJson(`${API_BASE_URL}/api/blocks/${encodeURIComponent(blockId)}/unlist`, payload)
+}

@@ -10,8 +10,8 @@ import { EmptyState } from "@/components/empty-state"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowDownToLine, CandlestickChart, TrendingUp, Wallet } from "lucide-react"
-import { fetchClusters } from "@/lib/api-client"
+import { ArrowDownToLine, Award, CandlestickChart, TrendingUp, Wallet } from "lucide-react"
+import { fetchClusters, fetchBlocks } from "@/lib/api-client"
 import { useWallet } from "@/lib/wallet-context"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
 
@@ -163,6 +163,17 @@ export default function TradePage() {
 
   const positions = useMemo(() => buildPositions(clusters, clerkUser?.id), [clusters, clerkUser?.id])
   const closedPositions = useMemo(() => buildClosedPositions(clusters, clerkUser?.id), [clusters, clerkUser?.id])
+
+  // Authorship blocks are a separate asset (pre-sold future layer profit, not a cell trade), kept
+  // in their own section so they don't mix with cell positions above.
+  const { data: myBlocksData } = useSWR(
+    clerkUser?.id ? ["my-blocks", clerkUser.id] : null,
+    () => fetchBlocks({ ownerClerkId: clerkUser.id, all: true }),
+    { refreshInterval: 5000, revalidateOnFocus: true }
+  )
+  const myBlocks = useMemo(() => (Array.isArray(myBlocksData?.data) ? myBlocksData.data : []), [myBlocksData])
+  const openBlocks = myBlocks.filter((block) => block.status === "sold")
+  const paidOutBlocks = myBlocks.filter((block) => block.status === "paid_out")
 
   // Simulated live feed: nudge each open position's price by +/- $0.01 every second so the
   // terminal feels alive between real cluster updates, without touching any real balance data.
@@ -343,6 +354,84 @@ export default function TradePage() {
           )}
         </CardContent>
       </Card>
+
+      <p className="mt-6 mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">Block positions</p>
+      <Card className="border-border shadow-sm">
+        <CardContent className="p-0">
+          {openBlocks.length === 0 ? (
+            <EmptyState compact icon={Award} title="No open block positions" />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cluster</TableHead>
+                  <TableHead>Layer</TableHead>
+                  <TableHead className="text-right">Paid</TableHead>
+                  <TableHead className="text-right">Will pay out</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {openBlocks.map((block) => (
+                  <TableRow key={block._id}>
+                    <TableCell>
+                      <Link href={`/authorship-market/${block._id}`} className="font-medium text-foreground hover:text-primary">
+                        {block.clusterSymbol}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{block.layer}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {formatCurrency(block.ownershipHistory?.find((h) => !h.releasedAt)?.price ?? block.originalPrice)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-primary">{formatCurrency(block.expectedShareAmount)}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        Waiting for layer
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {paidOutBlocks.length > 0 && (
+        <>
+          <p className="mt-6 mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">Closed block positions</p>
+          <Card className="border-border shadow-sm">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cluster</TableHead>
+                    <TableHead>Layer</TableHead>
+                    <TableHead className="text-right">Paid out</TableHead>
+                    <TableHead>Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paidOutBlocks.map((block) => (
+                    <TableRow key={block._id}>
+                      <TableCell>
+                        <Link href={`/authorship-market/${block._id}`} className="font-medium text-foreground hover:text-primary">
+                          {block.clusterSymbol}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{block.layer}</TableCell>
+                      <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                        +{formatCurrency(block.paidOutAmount)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{block.paidOutAt ? new Date(block.paidOutAt).toLocaleString() : "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <div>
