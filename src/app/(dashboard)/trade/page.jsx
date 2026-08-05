@@ -224,7 +224,10 @@ export default function TradePage() {
   const investedEntries = useMemo(() => investmentTransactions.filter((tx) => tx.type === "debit"), [investmentTransactions])
   const profitEntries = useMemo(() => investmentTransactions.filter((tx) => tx.type === "credit"), [investmentTransactions])
   const totalInvested = investedEntries.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
-  const totalProfit = profitEntries.reduce((sum, tx) => sum + (Number(tx.amount || 0) - Number(tx.costBasis || 0)), 0)
+  // tx.amount on a realized-profit credit is already the net GAIN (server-side credits only the
+  // gain, never the full sale proceeds, since a purchase never debited the cost basis in the first
+  // place) — don't subtract tx.costBasis again here, that field is informational only now.
+  const totalProfit = profitEntries.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
 
   if (!isSignedIn) return <p>Please log in</p>
 
@@ -521,7 +524,7 @@ export default function TradePage() {
                   </TableHeader>
                   <TableBody>
                     {profitEntries.map((tx, index) => {
-                      const gain = Number(tx.amount || 0) - Number(tx.costBasis || 0)
+                      const gain = Number(tx.amount || 0)
                       return (
                         <TableRow key={`${tx.createdAt}-${index}`}>
                           <TableCell className="text-foreground">{tx.clusterSymbol || "—"}</TableCell>

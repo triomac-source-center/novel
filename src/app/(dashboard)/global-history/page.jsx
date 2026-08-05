@@ -31,7 +31,9 @@ export default function GlobalHistoryPage() {
       .map((tx) => ({
         ...tx,
         kind: tx.type === "credit" ? "profit" : "buy",
-        gain: tx.type === "credit" ? Number(tx.amount || 0) - Number(tx.costBasis || 0) : null,
+        // A realized-profit credit's amount is already the net gain (server-side credits only the
+        // gain, not the full sale proceeds) — costBasis on the transaction is informational only.
+        gain: tx.type === "credit" ? Number(tx.amount || 0) : null,
       }))
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   }, [real.transactions])
