@@ -260,7 +260,9 @@ export default function TradePage() {
       </div>
 
       <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">Open positions</p>
-      <Card className="border-border shadow-sm">
+      {/* Open = still "alive" — same warm dark card + floating shadow as the Authorship Market
+          cards, so open positions read as active, distinct from the flat/muted closed sections. */}
+      <Card className="border-border/60 bg-[oklch(0.16_0.014_50)] shadow-[0_10px_30px_-14px_rgba(0,0,0,0.7)]">
         <CardContent className="p-0">
           {positions.length === 0 ? (
             <EmptyState compact icon={CandlestickChart} title="No open positions" />
@@ -364,7 +366,7 @@ export default function TradePage() {
       </Card>
 
       <p className="mt-6 mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">Block positions</p>
-      <Card className="border-border shadow-sm">
+      <Card className="border-border/60 bg-[oklch(0.16_0.014_50)] shadow-[0_10px_30px_-14px_rgba(0,0,0,0.7)]">
         <CardContent className="p-0">
           {openBlocks.length === 0 ? (
             <EmptyState compact icon={Award} title="No open block positions" />
@@ -428,7 +430,9 @@ export default function TradePage() {
                         </Link>
                       </TableCell>
                       <TableCell className="text-muted-foreground">{block.layer}</TableCell>
-                      <TableCell className="text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                      {/* Same treatment as closed cell positions: settled, so a neutral gray
+                          instead of green — no longer a "live" gain to react to. */}
+                      <TableCell className="text-right font-semibold text-muted-foreground/70">
                         +{formatCurrency(block.paidOutAmount)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{block.paidOutAt ? new Date(block.paidOutAt).toLocaleString() : "—"}</TableCell>

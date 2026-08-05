@@ -16,9 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Layers3, PlusCircle, Radio, Trash2, XCircle } from "lucide-react"
+import { AlertTriangle, Layers3, PlusCircle, Radio, Trash2, XCircle } from "lucide-react"
 import { calculateClusterMetrics, formatCurrency } from "@/lib/cluster-utils"
-import { fetchClusters, publishCluster, closeCluster, deleteCluster, deleteAllClusters } from "@/lib/api-client"
+import { fetchClusters, publishCluster, closeCluster, deleteCluster, deleteAllClusters, resetAllData } from "@/lib/api-client"
 import { getAdminAccessCode } from "@/lib/admin"
 import { useToast } from "@/lib/toast-context"
 
@@ -35,6 +35,7 @@ export default function AdminClustersPage() {
   const [loading, setLoading] = useState(true)
   const [actionTarget, setActionTarget] = useState(null)
   const [deleteAllOpen, setDeleteAllOpen] = useState(false)
+  const [resetAllOpen, setResetAllOpen] = useState(false)
   const [processing, setProcessing] = useState(false)
 
   const loadClusters = async () => {
@@ -96,6 +97,26 @@ export default function AdminClustersPage() {
     }
   }
 
+  // Nuclear option: clusters, authorship blocks, AND every user's wallet (balance + transaction
+  // history) — everyone genuinely starts from zero and has to deposit again.
+  const handleResetAll = async () => {
+    if (!clerkUser?.id) return
+    setProcessing(true)
+
+    try {
+      const result = await resetAllData({ clerkId: clerkUser.id, adminCode: getAdminAccessCode() })
+      toast.success(
+        `Reset complete: ${result?.deletedClusters ?? 0} cluster(s), ${result?.deletedBlocks ?? 0} block(s), ${result?.resetUsers ?? 0} user wallet(s).`
+      )
+      setResetAllOpen(false)
+      await loadClusters()
+    } catch (err) {
+      toast.error(err.message || "Could not reset all data")
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -111,6 +132,10 @@ export default function AdminClustersPage() {
                 Delete all
               </Button>
             )}
+            <Button variant="destructive" onClick={() => setResetAllOpen(true)}>
+              <AlertTriangle className="h-4 w-4" />
+              Reset everything
+            </Button>
             <Link href="/admin/clusters/new">
               <Button>
                 <PlusCircle className="h-4 w-4" />
@@ -268,6 +293,26 @@ export default function AdminClustersPage() {
             </Button>
             <Button onClick={handleDeleteAll} disabled={processing} variant="destructive">
               {processing ? "Deleting..." : "Delete all clusters"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetAllOpen} onOpenChange={setResetAllOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset absolutely everything?</DialogTitle>
+            <DialogDescription>
+              This deletes every cluster and authorship block, AND resets every user's real and demo balance
+              to zero with their full transaction history cleared. Everyone will need to deposit again. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetAllOpen(false)} disabled={processing}>
+              Cancel
+            </Button>
+            <Button onClick={handleResetAll} disabled={processing} variant="destructive">
+              {processing ? "Resetting..." : "Reset everything"}
             </Button>
           </DialogFooter>
         </DialogContent>

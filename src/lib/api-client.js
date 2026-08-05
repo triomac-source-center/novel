@@ -183,6 +183,10 @@ export async function deleteAllClusters(payload) {
   return deleteJson(`${API_BASE_URL}/api/clusters`, payload)
 }
 
+export async function resetAllData(payload) {
+  return deleteJson(`${API_BASE_URL}/api/admin/reset-all`, payload)
+}
+
 export async function postWithdraw(payload) {
   return postJson(`${API_BASE_URL}/api/withdraw`, payload)
 }
