@@ -204,11 +204,16 @@ export default function TradePage() {
   // if it were bought out at the current layer price — "potential profit", next to what was paid.
   const positionsByKey = new Map(livePositions.map((position) => [position.key, position]))
 
-  // Realized activity (layer transitions, cell payouts) is persisted server-side on the user's
-  // transaction history (category: "investment") — this isn't a client-only computation, it's the
-  // same record shown on /portfolio and in the admin cluster activity log.
+  // Realized activity (layer transitions, cell payouts, AND authorship block purchases/payouts) is
+  // persisted server-side on the user's transaction history — this isn't a client-only computation,
+  // it's the same record shown on /portfolio and in the admin cluster activity log. Both sources
+  // ("investment" = cell trades, "block" = authorship blocks) are merged into one PNL/Invested
+  // total; `tx.category` is what's left to tell them apart for display, no separate field needed.
   const investmentTransactions = useMemo(
-    () => real.transactions.filter((tx) => tx.category === "investment").sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+    () =>
+      real.transactions
+        .filter((tx) => tx.category === "investment" || tx.category === "block")
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
     [real.transactions]
   )
 
@@ -446,13 +451,14 @@ export default function TradePage() {
             <CardContent className="p-0">
               {investedEntries.length === 0 ? (
                 <div className="p-6">
-                  <EmptyState icon={ArrowDownToLine} title="No investments yet" description="Money used to buy cells will show up here." />
+                  <EmptyState icon={ArrowDownToLine} title="No investments yet" description="Money used to buy cells or authorship blocks will show up here." />
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Cluster</TableHead>
+                      <TableHead>Source</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead className="text-right">Potential profit</TableHead>
@@ -466,6 +472,11 @@ export default function TradePage() {
                       return (
                         <TableRow key={`${tx.createdAt}-${index}`}>
                           <TableCell className="text-foreground">{tx.clusterSymbol || "—"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {tx.category === "block" ? "Block" : "Cell"}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell className="text-right font-semibold text-blue-600 dark:text-blue-400">{formatCurrency(tx.amount)}</TableCell>
                           <TableCell className="text-right text-sm text-muted-foreground/70">
@@ -496,13 +507,14 @@ export default function TradePage() {
             <CardContent className="p-0">
               {profitEntries.length === 0 ? (
                 <div className="p-6">
-                  <EmptyState icon={TrendingUp} title="No profit yet" description="Realized gains from cell payouts will show up here." />
+                  <EmptyState icon={TrendingUp} title="No profit yet" description="Realized gains from cell payouts and authorship block payouts will show up here." />
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Cluster</TableHead>
+                      <TableHead>Source</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead className="text-right">Gain</TableHead>
                     </TableRow>
@@ -513,6 +525,11 @@ export default function TradePage() {
                       return (
                         <TableRow key={`${tx.createdAt}-${index}`}>
                           <TableCell className="text-foreground">{tx.clusterSymbol || "—"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">
+                              {tx.category === "block" ? "Block" : "Cell"}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</TableCell>
                           <TableCell className={`text-right font-semibold ${gain >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}>
                             {gain >= 0 ? "+" : ""}

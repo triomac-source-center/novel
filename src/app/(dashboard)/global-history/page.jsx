@@ -17,8 +17,9 @@ const FILTERS = [
   { value: "profit", label: "Profits" },
 ]
 
-// Every trading-related money movement (cell purchases, realized profit from cell transfers) —
-// deposits/withdrawals live on the separate /transactions page and are excluded here.
+// Every trading-related money movement — cell purchases/payouts AND authorship block
+// purchases/payouts, merged into one chronological feed (tx.category still distinguishes them for
+// display) — deposits/withdrawals live on the separate /transactions page and are excluded here.
 export default function GlobalHistoryPage() {
   const { isSignedIn } = useUser()
   const { real, loading } = useWallet()
@@ -26,7 +27,7 @@ export default function GlobalHistoryPage() {
 
   const entries = useMemo(() => {
     return real.transactions
-      .filter((tx) => tx.category === "investment")
+      .filter((tx) => tx.category === "investment" || tx.category === "block")
       .map((tx) => ({
         ...tx,
         kind: tx.type === "credit" ? "profit" : "buy",
@@ -72,6 +73,7 @@ export default function GlobalHistoryPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Type</TableHead>
+                    <TableHead>Source</TableHead>
                     <TableHead>Cluster</TableHead>
                     <TableHead>Layer</TableHead>
                     <TableHead>Date</TableHead>
@@ -96,6 +98,11 @@ export default function GlobalHistoryPage() {
                               {isBuy ? "Buy" : "Profit"}
                             </Badge>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {entry.category === "block" ? "Block" : "Cell"}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-foreground">{entry.clusterSymbol || "—"}</TableCell>
                         <TableCell className="text-muted-foreground">{entry.layer ?? "—"}</TableCell>
