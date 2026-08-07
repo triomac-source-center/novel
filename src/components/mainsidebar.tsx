@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Award, CandlestickChart, Globe2, History, LayoutDashboard, Layers3, LineChart, Menu, ShieldCheck, UserRound, Wallet, X } from "lucide-react"
+import { Award, CandlestickChart, Globe2, History, LayoutDashboard, Layers3, LineChart, Menu, ShieldCheck, Terminal, UserRound, Wallet, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { hasAdminAccess } from "@/lib/admin"
 import { useWallet } from "@/lib/wallet-context"
@@ -12,6 +12,7 @@ const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { name: "Cluster market", href: "/market", icon: Layers3 },
   { name: "Trade", href: "/trade", icon: CandlestickChart },
+  { name: "Terminal", href: "/terminal", icon: Terminal },
   { name: "Authorship market", href: "/authorship-market", icon: Award },
   { name: "Portfolio", href: "/portfolio", icon: LineChart },
   { name: "Wallet", href: "/wallet", icon: Wallet },
