@@ -191,6 +191,25 @@ export async function postWithdraw(payload) {
   return postJson(`${API_BASE_URL}/api/withdraw`, payload)
 }
 
+export async function fetchDepositAddress(clerkId) {
+  if (!clerkId) throw new Error("Missing clerk id")
+  return requestJson(`${API_BASE_URL}/api/wallet/deposit-address?clerkId=${encodeURIComponent(clerkId)}`)
+}
+
+// Unlike every other write in this file, this one moves real funds out to an address the caller
+// supplies, so the backend requires a verified Clerk session token instead of a bare clerkId.
+export async function postWithdrawCrypto(token, payload) {
+  if (!token) throw new Error("Missing auth token")
+  return requestJson(`${API_BASE_URL}/api/wallet/withdraw`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function fetchNotifications(clerkId, limit = 30) {
   if (!clerkId) throw new Error("Missing clerk id")
   return requestJson(

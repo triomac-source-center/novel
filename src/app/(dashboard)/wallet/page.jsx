@@ -12,26 +12,40 @@ import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
 import { EmptyState } from "@/components/empty-state"
 import { TrendChart } from "@/components/chart"
-import { ArrowUpRight, ArrowDownRight, Wallet, Sparkles, BadgeDollarSign, RotateCcw, Clock3 } from "lucide-react"
-import { useUser } from "@clerk/nextjs"
+import { ArrowUpRight, ArrowDownRight, Wallet, Sparkles, BadgeDollarSign, RotateCcw, Clock3, Copy, Check } from "lucide-react"
+import { useUser, useAuth as useClerkAuth } from "@clerk/nextjs"
 import { useWallet } from "@/lib/wallet-context"
 import { useToast } from "@/lib/toast-context"
-import { postDeposit, postFundAccount, postSetDemoBalance, postWithdraw } from "@/lib/api-client"
+import { postFundAccount, postSetDemoBalance, fetchDepositAddress, postWithdrawCrypto } from "@/lib/api-client"
 
 export default function WalletPage() {
   const { user: clerkUser, isSignedIn } = useUser()
+  const { getToken } = useClerkAuth()
   const { user } = useAuth()
   const router = useRouter()
   const toast = useToast()
-  const { real, demo, setBalance } = useWallet()
+  const { real, demo, setBalance, refresh } = useWallet()
   const [mounted, setMounted] = useState(false)
   const [accountType, setAccountType] = useState("real")
   const [depositAmount, setDepositAmount] = useState("")
   const [withdrawAmount, setWithdrawAmount] = useState("")
+  const [withdrawToAddress, setWithdrawToAddress] = useState("")
   const [demoSetAmount, setDemoSetAmount] = useState("")
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const pageSize = 6
+
+  // Crypto deposit-address flow (real account only) — separate from `loading` above so it doesn't
+  // fight with the demo-tab buttons for the same flag.
+  const [depositAddress, setDepositAddress] = useState(null)
+  const [depositAddressLoading, setDepositAddressLoading] = useState(false)
+  const [depositAddressError, setDepositAddressError] = useState("")
+  const [addressCopied, setAddressCopied] = useState(false)
+
+  // Real-money crypto withdrawal flow — separate loading/result state from the mocked handleWithdraw
+  // below, since this one calls a different, auth-gated endpoint.
+  const [withdrawCryptoLoading, setWithdrawCryptoLoading] = useState(false)
+  const [withdrawResult, setWithdrawResult] = useState(null)
 
   useEffect(() => {
     setMounted(true)
@@ -64,6 +78,8 @@ export default function WalletPage() {
   }
 
   const handleDeposit = async () => {
+    // Real-account deposits no longer go through this amount-based mock flow — see
+    // handleGetDepositAddress below. This handler now only serves the demo tab.
     const amount = Number(depositAmount)
     if (!depositAmount || Number.isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid deposit amount")
@@ -72,22 +88,42 @@ export default function WalletPage() {
 
     try {
       setLoading(true)
-
-      if (accountType === "demo") {
-        const result = await postFundAccount({ clerkId: clerkUser.id, amount, type: "demo", description: "Demo account funding" })
-        setBalance("demo", result?.balance ?? balance + amount, result?.wallet?.transactions)
-        setDepositAmount("")
-        toast.success(`Demo deposit applied: $${amount.toFixed(2)}`)
-      } else {
-        const result = await postDeposit({ clerkId: clerkUser.id, amount, description: "Wallet deposit" })
-        setBalance("real", result?.wallet?.balance ?? balance + amount, result?.wallet?.transactions)
-        setDepositAmount("")
-        toast.success(`Deposit successful: $${amount.toFixed(2)}`)
-      }
+      const result = await postFundAccount({ clerkId: clerkUser.id, amount, type: "demo", description: "Demo account funding" })
+      setBalance("demo", result?.balance ?? balance + amount, result?.wallet?.transactions)
+      setDepositAmount("")
+      toast.success(`Demo deposit applied: $${amount.toFixed(2)}`)
     } catch (err) {
       toast.error(err.message || "Deposit failed")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGetDepositAddress = async () => {
+    if (!clerkUser?.id) {
+      toast.error("You must be logged in to get a deposit address.")
+      return
+    }
+    try {
+      setDepositAddressLoading(true)
+      setDepositAddressError("")
+      const result = await fetchDepositAddress(clerkUser.id)
+      setDepositAddress(result?.data?.address || null)
+    } catch (err) {
+      setDepositAddressError(err.message || "Could not load your deposit address")
+    } finally {
+      setDepositAddressLoading(false)
+    }
+  }
+
+  const handleCopyAddress = async () => {
+    if (!depositAddress) return
+    try {
+      await navigator.clipboard.writeText(depositAddress)
+      setAddressCopied(true)
+      setTimeout(() => setAddressCopied(false), 2000)
+    } catch {
+      toast.error("Could not copy address")
     }
   }
 
@@ -105,22 +141,34 @@ export default function WalletPage() {
       toast.error("Withdrawals are only available on the real account.")
       return
     }
+    if (!withdrawToAddress.trim()) {
+      toast.error("Please enter a destination TRON address")
+      return
+    }
     if (!clerkUser?.id) {
       toast.error("You must be logged in to withdraw funds.")
       return
     }
 
-    setLoading(true)
+    setWithdrawCryptoLoading(true)
+    setWithdrawResult(null)
 
     try {
-      const result = await postWithdraw({ clerkId: clerkUser.id, amount, description: "Wallet withdrawal" })
-      setBalance("real", result?.wallet?.balance ?? balance - amount, result?.wallet?.transactions)
+      // This endpoint requires a real verified Clerk session (unlike every other call on this
+      // page, which trusts the plain clerkId) because it moves real USDT out to an external
+      // address the caller supplies.
+      const token = await getToken()
+      const result = await postWithdrawCrypto(token, { amount, toAddress: withdrawToAddress.trim() })
+      setWithdrawResult({ status: result?.data?.status || null, error: null })
       setWithdrawAmount("")
-      toast.success(`Withdrawal successful: $${amount.toFixed(2)}`)
+      setWithdrawToAddress("")
+      await refresh("real")
+      toast.success(`Withdrawal requested: $${amount.toFixed(2)} (status: ${result?.data?.status})`)
     } catch (err) {
+      setWithdrawResult({ status: null, error: err.message || "Withdrawal failed" })
       toast.error(err.message || "Withdrawal failed")
     } finally {
-      setLoading(false)
+      setWithdrawCryptoLoading(false)
     }
   }
 
@@ -187,27 +235,57 @@ export default function WalletPage() {
               <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
               Deposit
             </div>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
-                <Input type="number" placeholder="0.00" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className="h-8 pl-6 text-sm" min="0" step="0.01" />
+            {accountType === "real" ? (
+              <div className="space-y-2">
+                {!depositAddress ? (
+                  <Button size="sm" className="h-8" onClick={handleGetDepositAddress} disabled={depositAddressLoading}>
+                    {depositAddressLoading ? "Loading..." : "Get deposit address"}
+                  </Button>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2 py-1.5">
+                      <code className="flex-1 truncate text-[11px] text-foreground">{depositAddress}</code>
+                      <button
+                        type="button"
+                        onClick={handleCopyAddress}
+                        className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        title="Copy address"
+                      >
+                        {addressCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Send only <span className="font-medium text-foreground">USDT on the TRON (TRC20) network</span> to this address. Funds sent on any other network will be lost.
+                    </p>
+                  </div>
+                )}
+                {depositAddressError && <p className="text-[11px] text-destructive">{depositAddressError}</p>}
               </div>
-              <Button size="sm" className="h-8" onClick={handleDeposit} disabled={!depositAmount || Number.parseFloat(depositAmount) <= 0 || loading}>
-                {loading ? "..." : "Add"}
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {[100, 500, 1000, 5000].map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  onClick={() => setDepositAmount(amount.toString())}
-                  className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                >
-                  ${amount}
-                </button>
-              ))}
-            </div>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                    <Input type="number" placeholder="0.00" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} className="h-8 pl-6 text-sm" min="0" step="0.01" />
+                  </div>
+                  <Button size="sm" className="h-8" onClick={handleDeposit} disabled={!depositAmount || Number.parseFloat(depositAmount) <= 0 || loading}>
+                    {loading ? "..." : "Add"}
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[100, 500, 1000, 5000].map((amount) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      onClick={() => setDepositAmount(amount.toString())}
+                      className="rounded-md border border-border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      ${amount}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="space-y-2 sm:pl-5">
@@ -218,19 +296,39 @@ export default function WalletPage() {
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
-                <Input type="number" placeholder="0.00" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="h-8 pl-6 text-sm" min="0" step="0.01" max={balance} />
+                <Input type="number" placeholder="0.00" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} className="h-8 pl-6 text-sm" min="0" step="0.01" max={balance} disabled={withdrawCryptoLoading} />
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8"
-                onClick={handleWithdraw}
-                disabled={loading || accountType === "demo" || !withdrawAmount || Number.parseFloat(withdrawAmount) <= 0 || Number.parseFloat(withdrawAmount) > balance}
-              >
-                Send
-              </Button>
             </div>
+            <Input
+              type="text"
+              placeholder="Destination TRON address"
+              value={withdrawToAddress}
+              onChange={(e) => setWithdrawToAddress(e.target.value)}
+              className="h-8 text-sm"
+              disabled={accountType === "demo" || withdrawCryptoLoading}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 w-full"
+              onClick={handleWithdraw}
+              disabled={
+                withdrawCryptoLoading ||
+                accountType === "demo" ||
+                !withdrawAmount ||
+                Number.parseFloat(withdrawAmount) <= 0 ||
+                Number.parseFloat(withdrawAmount) > balance ||
+                !withdrawToAddress.trim()
+              }
+            >
+              {withdrawCryptoLoading ? "Sending..." : "Send"}
+            </Button>
             {accountType === "demo" && <p className="text-[11px] text-muted-foreground">Switch to your real account to withdraw funds.</p>}
+            {withdrawResult && (
+              <p className={`text-[11px] ${withdrawResult.error ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
+                {withdrawResult.error ? withdrawResult.error : `Withdrawal status: ${withdrawResult.status}`}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
