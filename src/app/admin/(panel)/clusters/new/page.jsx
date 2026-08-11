@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useUser } from "@clerk/nextjs"
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,7 +16,6 @@ import { useToast } from "@/lib/toast-context"
 const ALGORITHMS = ["mean-reversion", "momentum", "grid", "scalping", "trend-following"]
 
 export default function AdminNewClusterPage() {
-  const { user: clerkUser } = useUser()
   const router = useRouter()
   const toast = useToast()
 
@@ -56,26 +54,22 @@ export default function AdminNewClusterPage() {
       toast.error("Layers and layer increment must be valid.")
       return
     }
-    if (!clerkUser?.id) {
-      toast.error("You must be signed in.")
-      return
-    }
-
     setSubmitting(true)
     try {
-      await createCluster({
-        clerkId: clerkUser.id,
-        adminCode: getAdminAccessCode(),
-        symbol,
-        name,
-        description,
-        algorythm,
-        cellCount: parsedCellCount,
-        cellValue: parsedCellValue,
-        maxLayers: parsedMaxLayers,
-        layerStep: parsedLayerStep,
-        creator: "triomac60",
-      })
+      await createCluster(
+        {
+          symbol,
+          name,
+          description,
+          algorythm,
+          cellCount: parsedCellCount,
+          cellValue: parsedCellValue,
+          maxLayers: parsedMaxLayers,
+          layerStep: parsedLayerStep,
+          creator: "triomac60",
+        },
+        getAdminAccessCode()
+      )
 
       toast.success(`${symbol} created as a draft.`)
       router.push("/admin/clusters")

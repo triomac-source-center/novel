@@ -16,7 +16,7 @@ import { ArrowUpRight, ArrowDownRight, Wallet, Sparkles, BadgeDollarSign, Rotate
 import { useUser, useAuth as useClerkAuth } from "@clerk/nextjs"
 import { useWallet } from "@/lib/wallet-context"
 import { useToast } from "@/lib/toast-context"
-import { postFundAccount, postSetDemoBalance, fetchDepositAddress, postWithdrawCrypto } from "@/lib/api-client"
+import { postSetDemoBalance, fetchDepositAddress, postWithdrawCrypto } from "@/lib/api-client"
 
 export default function WalletPage() {
   const { user: clerkUser, isSignedIn } = useUser()
@@ -88,7 +88,9 @@ export default function WalletPage() {
 
     try {
       setLoading(true)
-      const result = await postFundAccount({ clerkId: clerkUser.id, amount, type: "demo", description: "Demo account funding" })
+      // /account/fund was retired (it minted arbitrary balance with no verification) — demo
+      // top-ups now go through set-demo-balance instead, which takes an absolute target.
+      const result = await postSetDemoBalance({ clerkId: clerkUser.id, amount: demo.balance + amount, description: "Demo account funding" })
       setBalance("demo", result?.balance ?? balance + amount, result?.wallet?.transactions)
       setDepositAmount("")
       toast.success(`Demo deposit applied: $${amount.toFixed(2)}`)

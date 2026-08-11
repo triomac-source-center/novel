@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import useSWR, { mutate as mutateGlobal } from "swr"
-import { useUser } from "@clerk/nextjs"
+import { useUser, useAuth } from "@clerk/nextjs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +26,7 @@ export default function AuthorshipBlockPage() {
   const params = useParams()
   const router = useRouter()
   const { user: clerkUser, isSignedIn } = useUser()
+  const { getToken } = useAuth()
   const { real, setBalance } = useWallet()
   const toast = useToast()
   const id = params?.id
@@ -73,7 +74,8 @@ export default function AuthorshipBlockPage() {
     }
     setBusy(true)
     try {
-      const result = await buyBlocks({ clerkId: clerkUser.id, blockIds: [block._id] })
+      const token = await getToken()
+      const result = await buyBlocks(token, { blockIds: [block._id] })
       mutate({ success: true, data: result.data[0] }, { revalidate: false })
       toast.success(`Acquired the layer ${block.layer} block in ${block.clusterSymbol} for ${formatCurrency(price)}.`)
       if (result?.wallet?.balance !== undefined) setBalance("real", result.wallet.balance)

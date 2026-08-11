@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { useUser } from "@clerk/nextjs"
 import { PageHeader } from "@/components/page-header"
 import { EmptyState } from "@/components/empty-state"
 import { Button } from "@/components/ui/button"
@@ -29,7 +28,6 @@ const STATUS_LABEL = {
 }
 
 export default function AdminClustersPage() {
-  const { user: clerkUser } = useUser()
   const toast = useToast()
   const [clusters, setClusters] = useState([])
   const [loading, setLoading] = useState(true)
@@ -57,19 +55,19 @@ export default function AdminClustersPage() {
   }, [])
 
   const handleConfirm = async () => {
-    if (!actionTarget || !clerkUser?.id) return
+    if (!actionTarget) return
     setProcessing(true)
 
     try {
-      const payload = { clerkId: clerkUser.id, adminCode: getAdminAccessCode() }
+      const adminCode = getAdminAccessCode()
       if (actionTarget.type === "publish") {
-        await publishCluster(actionTarget.cluster._id, payload)
+        await publishCluster(actionTarget.cluster._id, adminCode)
         toast.success(`${actionTarget.cluster.name || actionTarget.cluster.symbol} published.`)
       } else if (actionTarget.type === "close") {
-        await closeCluster(actionTarget.cluster._id, payload)
+        await closeCluster(actionTarget.cluster._id, adminCode)
         toast.success(`${actionTarget.cluster.name || actionTarget.cluster.symbol} closed.`)
       } else {
-        await deleteCluster(actionTarget.cluster._id, payload)
+        await deleteCluster(actionTarget.cluster._id, adminCode)
         toast.success(`${actionTarget.cluster.name || actionTarget.cluster.symbol} deleted.`)
       }
       setActionTarget(null)
@@ -82,11 +80,10 @@ export default function AdminClustersPage() {
   }
 
   const handleDeleteAll = async () => {
-    if (!clerkUser?.id) return
     setProcessing(true)
 
     try {
-      const result = await deleteAllClusters({ clerkId: clerkUser.id, adminCode: getAdminAccessCode() })
+      const result = await deleteAllClusters(getAdminAccessCode())
       toast.success(`${result?.deletedCount ?? 0} cluster(s) deleted.`)
       setDeleteAllOpen(false)
       await loadClusters()
@@ -100,11 +97,10 @@ export default function AdminClustersPage() {
   // Nuclear option: clusters, authorship blocks, AND every user's wallet (balance + transaction
   // history) — everyone genuinely starts from zero and has to deposit again.
   const handleResetAll = async () => {
-    if (!clerkUser?.id) return
     setProcessing(true)
 
     try {
-      const result = await resetAllData({ clerkId: clerkUser.id, adminCode: getAdminAccessCode() })
+      const result = await resetAllData(getAdminAccessCode())
       toast.success(
         `Reset complete: ${result?.deletedClusters ?? 0} cluster(s), ${result?.deletedBlocks ?? 0} block(s), ${result?.resetUsers ?? 0} user wallet(s).`
       )

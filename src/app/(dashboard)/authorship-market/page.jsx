@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import useSWR, { mutate as mutateGlobal } from "swr"
-import { useUser } from "@clerk/nextjs"
+import { useUser, useAuth } from "@clerk/nextjs"
 import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
 import { EmptyState } from "@/components/empty-state"
@@ -21,6 +21,7 @@ const selectClass =
 
 export default function AuthorshipMarketPage() {
   const { user: clerkUser, isSignedIn } = useUser()
+  const { getToken } = useAuth()
   const { real, setBalance } = useWallet()
   const toast = useToast()
 
@@ -78,7 +79,8 @@ export default function AuthorshipMarketPage() {
     }
     setBuying(true)
     try {
-      const result = await buyBlocks({ clerkId: clerkUser.id, blockIds })
+      const token = await getToken()
+      const result = await buyBlocks(token, { blockIds })
       toast.success(`Acquired ${result.data.length} authorship block(s) for ${formatCurrency(total)}.`)
       if (result?.wallet?.balance !== undefined) setBalance("real", result.wallet.balance)
       mutateGlobal("authorship-blocks")

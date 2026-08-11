@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import useSWR, { mutate as mutateGlobal } from "swr"
-import { useUser } from "@clerk/nextjs"
+import { useUser, useAuth } from "@clerk/nextjs"
 import { PageHeader } from "@/components/page-header"
 import { CandlestickChart } from "@/components/candlestick-chart"
 import { Card, CardContent } from "@/components/ui/card"
@@ -83,6 +83,7 @@ function lastActivityTime(cluster) {
 
 export default function TerminalPage() {
   const { user: clerkUser, isSignedIn } = useUser()
+  const { getToken } = useAuth()
   const { real, setBalance } = useWallet()
   const toast = useToast()
 
@@ -149,7 +150,8 @@ export default function TerminalPage() {
     }
     setBuying(true)
     try {
-      const result = await investInCluster(selected.id, { clerkId: clerkUser.id, cells: qty })
+      const token = await getToken()
+      const result = await investInCluster(selected.id, token, { cells: qty })
       toast.success(`Bought ${qty} cell(s) in ${selected.symbol}, layer ${selected.metrics.currentLayer}, for ${formatCurrency(total)}.`)
       if (result?.wallet?.balance !== undefined) setBalance("real", result.wallet.balance)
       setCellQty("1")
@@ -173,7 +175,8 @@ export default function TerminalPage() {
     }
     setBuying(true)
     try {
-      const result = await buyBlocks({ clerkId: clerkUser.id, blockIds: [block._id] })
+      const token = await getToken()
+      const result = await buyBlocks(token, { blockIds: [block._id] })
       toast.success(`Acquired the layer ${block.layer} authorship block in ${block.clusterSymbol} for ${formatCurrency(price)}.`)
       if (result?.wallet?.balance !== undefined) setBalance("real", result.wallet.balance)
       mutateGlobal("authorship-blocks")

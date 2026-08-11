@@ -86,16 +86,6 @@ export async function fetchAccount(clerkId, type = "real") {
   return requestJson(url)
 }
 
-export async function postFundAccount(payload) {
-  return requestJson(`${API_BASE_URL}/api/account/fund`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  })
-}
-
 export async function postSetDemoBalance(payload) {
   return requestJson(`${API_BASE_URL}/api/account/set-demo-balance`, {
     method: "POST",
@@ -106,24 +96,26 @@ export async function postSetDemoBalance(payload) {
   })
 }
 
-export async function postDeposit(payload) {
-  return requestJson(`${API_BASE_URL}/api/deposit`, {
+function postJson(url, payload, extraHeaders = {}) {
+  return requestJson(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...extraHeaders,
     },
     body: JSON.stringify(payload),
   })
 }
 
-function postJson(url, payload) {
-  return requestJson(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  })
+// The admin routes accept the shared secret code via this header instead of a body field — never
+// sent at all when no code is supplied (e.g. once an admin's Clerk session alone is enough).
+function adminCodeHeaders(adminCode) {
+  return adminCode ? { "X-Admin-Code": adminCode } : {}
+}
+
+function bearerHeaders(token) {
+  if (!token) throw new Error("Missing auth token")
+  return { Authorization: `Bearer ${token}` }
 }
 
 export async function fetchClusters() {
@@ -135,60 +127,60 @@ export async function fetchClusterById(clusterId) {
   return requestJson(`${API_BASE_URL}/api/all/clusters/${encodeURIComponent(clusterId)}`)
 }
 
-export async function createCluster(payload) {
-  return postJson(`${API_BASE_URL}/api/clusters`, payload)
+export async function createCluster(payload, adminCode) {
+  return postJson(`${API_BASE_URL}/api/clusters`, payload, adminCodeHeaders(adminCode))
 }
 
-export async function investInCluster(clusterId, payload) {
+// Requires a real Clerk session (see wallet_withdraw_route.js for why) — the backend now reads the
+// investor's identity from the token, not from a clerkId field in the body.
+export async function investInCluster(clusterId, token, payload) {
   if (!clusterId) throw new Error("Missing cluster id")
-  return postJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/invest`, payload)
+  return postJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/invest`, payload, bearerHeaders(token))
 }
 
-function patchJson(url, payload) {
+function patchJson(url, payload, extraHeaders = {}) {
   return requestJson(url, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      ...extraHeaders,
     },
     body: JSON.stringify(payload),
   })
 }
 
-export async function publishCluster(clusterId, payload) {
+export async function publishCluster(clusterId, adminCode) {
   if (!clusterId) throw new Error("Missing cluster id")
-  return patchJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/publish`, payload)
+  return patchJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/publish`, {}, adminCodeHeaders(adminCode))
 }
 
-export async function closeCluster(clusterId, payload) {
+export async function closeCluster(clusterId, adminCode) {
   if (!clusterId) throw new Error("Missing cluster id")
-  return patchJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/close`, payload)
+  return patchJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}/close`, {}, adminCodeHeaders(adminCode))
 }
 
-function deleteJson(url, payload) {
+function deleteJson(url, payload, extraHeaders = {}) {
   return requestJson(url, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
+      ...extraHeaders,
     },
     body: JSON.stringify(payload),
   })
 }
 
-export async function deleteCluster(clusterId, payload) {
+export async function deleteCluster(clusterId, adminCode) {
   if (!clusterId) throw new Error("Missing cluster id")
-  return deleteJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}`, payload)
+  return deleteJson(`${API_BASE_URL}/api/clusters/${encodeURIComponent(clusterId)}`, {}, adminCodeHeaders(adminCode))
 }
 
-export async function deleteAllClusters(payload) {
-  return deleteJson(`${API_BASE_URL}/api/clusters`, payload)
+export async function deleteAllClusters(adminCode) {
+  return deleteJson(`${API_BASE_URL}/api/clusters`, {}, adminCodeHeaders(adminCode))
 }
 
-export async function resetAllData(payload) {
-  return deleteJson(`${API_BASE_URL}/api/admin/reset-all`, payload)
-}
-
-export async function postWithdraw(payload) {
-  return postJson(`${API_BASE_URL}/api/withdraw`, payload)
+export async function resetAllData(adminCode) {
+  return deleteJson(`${API_BASE_URL}/api/admin/reset-all`, {}, adminCodeHeaders(adminCode))
 }
 
 export async function fetchDepositAddress(clerkId) {
@@ -247,8 +239,9 @@ export async function fetchBlockById(blockId) {
   return requestJson(`${API_BASE_URL}/api/blocks/${encodeURIComponent(blockId)}`)
 }
 
-export async function buyBlocks(payload) {
-  return postJson(`${API_BASE_URL}/api/blocks/buy`, payload)
+// Requires a real Clerk session, same reasoning as investInCluster above.
+export async function buyBlocks(token, payload) {
+  return postJson(`${API_BASE_URL}/api/blocks/buy`, payload, bearerHeaders(token))
 }
 
 export async function listBlockForResale(blockId, payload) {

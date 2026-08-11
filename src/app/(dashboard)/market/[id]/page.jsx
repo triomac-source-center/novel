@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useUser } from "@clerk/nextjs"
+import { useUser, useAuth } from "@clerk/nextjs"
 import useSWR, { mutate as mutateGlobal } from "swr"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,6 +47,7 @@ export default function ClusterPage() {
   const params = useParams()
   const router = useRouter()
   const { user: clerkUser, isSignedIn } = useUser()
+  const { getToken } = useAuth()
   const { real, setBalance } = useWallet()
   const toast = useToast()
   const id = params?.id
@@ -137,7 +138,8 @@ export default function ClusterPage() {
     setInvesting(true)
 
     try {
-      const result = await investInCluster(cluster.id, { clerkId: clerkUser.id, cells: parsedCells })
+      const token = await getToken()
+      const result = await investInCluster(cluster.id, token, { cells: parsedCells })
       mutate(result, { revalidate: false })
       setCells("1")
       toast.success(`Bought ${parsedCells} cell(s) in ${cluster.symbol}, layer ${metrics.currentLayer}, for ${formatCurrency(total)}.`)
