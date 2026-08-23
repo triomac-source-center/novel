@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://novel-server-cdcp.onrender.com"
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.tryomac.com"
 
 // The free-tier backend can take 30-50s to wake up from a cold sleep, so the retry budget needs
 // to actually cover that instead of giving up after a couple seconds and leaving the UI stuck on
