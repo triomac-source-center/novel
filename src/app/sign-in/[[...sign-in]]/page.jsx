@@ -1,63 +1,17 @@
-import Link from 'next/link'
-
-import { Button } from '@/components/Button'
-import { TextField } from '@/components/Fields'
-import { Logo } from '@/components/Logo'
-import { SlimLayout } from '@/components/SlimLayout'
 import { SignIn } from '@clerk/nextjs'
+import { AuthLayout } from '@/components/marketing/AuthLayout'
 
 export const metadata = {
-  title: 'Sign In',
+  title: 'Connexion',
 }
 
 export default function Login() {
   return (
-    <SlimLayout>
-      <div className="flex">
-        <Link href="/" aria-label="Home">
-          <Logo className="h-10 w-auto" />
-        </Link>
+    <AuthLayout tagline="Accédez à votre espace d'investissement.">
+      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Connectez-vous à votre compte</h1>
+      <div className="mt-8">
+        <SignIn redirectUrl="/dashboard" />
       </div>
-      <h2 className="mt-10 text-lg font-semibold text-gray-900">
-        
-      </h2>
-      {/* <p className="mt-2 text-sm text-gray-700">
-        Don’t have an account?{' '}
-        <Link
-          href="/register"
-          className="font-medium text-blue-600 hover:underline"
-        >
-          Sign up
-        </Link>{' '}
-        for a free trial.
-      </p>
-      <form action="#" className="mt-10 grid grid-cols-1 gap-y-8">
-        <TextField
-          label="Email address"
-          name="email"
-          id="email"
-          type="email"
-          autoComplete="email"
-          required
-        />
-        <TextField
-          label="Password"
-          name="password"
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          required
-        />
-        <div>
-          <Button type="submit" formAction={login} variant="solid" color="blue" className="w-full">
-            <span>
-              Sign in <span aria-hidden="true">&rarr;</span>
-            </span>
-          </Button>
-          <SignInWithGoogleButton/>
-        </div>
-      </form> */}
-      <SignIn redirectUrl="/dashboard"/>
-    </SlimLayout>
+    </AuthLayout>
   )
 }

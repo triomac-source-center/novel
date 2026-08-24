@@ -6,6 +6,7 @@ import { ToastProvider } from '@/lib/toast-context'
 
 import '@/styles/tailwind.css'
 import { ClerkProvider, SignedIn, SignedOut, SignInButton, SignOutButton, UserButton } from '@clerk/nextjs'
+import { dark } from '@clerk/themes'
 
 export const metadata = {
   title: {
@@ -13,7 +14,7 @@ export const metadata = {
     default: 'triomac60 | Layered cluster investing',
   },
   description:
-    'Most bookkeeping software is accurate, but hard to use. We make the opposite trade-off, and hope you don’t get audited.',
+    "Déposez en USDT (TRON, TRC20), investissez dans des clusters gérés par couches, et retirez vos gains à tout moment.",
 }
 
 const inter = Inter({
@@ -30,7 +31,7 @@ const lexend = Lexend({
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={{ baseTheme: dark }}>
     <html
       lang="fr"
       className={clsx(
